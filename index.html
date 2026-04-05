@@ -155,6 +155,18 @@ canvas { display: block; }
 
 .waterfall-wrap { overflow-x: auto; margin-bottom: 6px; }
 .wf-svg { display: block; width: 100%; }
+
+.range-controls {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 12px; padding: 10px 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+}
+.range-controls label { font-family: var(--font-m); font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+.range-controls strong { color: var(--gold); }
+.range-controls input[type=range] { width: 120px; }
+.rc-sep { color: var(--text-dim); font-family: var(--font-m); font-size: 11px; }
+.rc-btn { padding: 4px 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; color: var(--text-muted); font-family: var(--font-m); font-size: 9px; letter-spacing: 1px; cursor: pointer; transition: all .15s; }
+.rc-btn:hover, .rc-btn.active { background: var(--gold); color: #0b0c0f; border-color: var(--gold); }
 </style>
 </head>
 <body>
@@ -308,18 +320,18 @@ function actualizarGastosSugeridos() {
   // Mantenimiento: 0.5% nueva (poco desgaste), 1% segunda mano (más roturas)
   const mantSug   = Math.round(precio * (esNueva ? 0.005 : 0.01));
 
-  gid('inp-ibi').value       = ibiSug;
-  gid('inp-comunidad').value = comunSug;
-  gid('inp-seguro').value    = seguroSug;
-  gid('inp-mant').value      = mantSug;
+  gid('inp-ibi').value       = fmtInput(ibiSug);
+  gid('inp-comunidad').value = fmtInput(comunSug);
+  gid('inp-seguro').value    = fmtInput(seguroSug);
+  gid('inp-mant').value      = fmtInput(mantSug);
   updateGastoPreview();
 }
 
 function updateGastoPreview() {
-  const total = (+gid('inp-ibi').value||0)
-              + (+gid('inp-comunidad').value||0)
-              + (+gid('inp-seguro').value||0)
-              + (+gid('inp-mant').value||0);
+  const total = parseInput('inp-ibi')
+              + parseInput('inp-comunidad')
+              + parseInput('inp-seguro')
+              + parseInput('inp-mant');
   const el = gid('gasto-total-preview');
   if (el) el.textContent = new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(total) + '/año';
 }
@@ -327,6 +339,58 @@ function updateGastoPreview() {
 const fmt = n => new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
 const fmtd = (n,d=2) => new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
 const pct = (n, d=1) => (+n).toFixed(d)+'%';
+
+// ── RANGE CONTROLS ───────────────────────────────────────────────────────────
+let _evFrom = 1, _evTo = 50;
+
+function updateRangeControls() {
+  let from = +document.getElementById('rc-from').value;
+  let to   = +document.getElementById('rc-to').value;
+  if (from >= to) {
+    if (document.activeElement.id === 'rc-from') { from = to - 1; document.getElementById('rc-from').value = from; }
+    else { to = from + 1; document.getElementById('rc-to').value = to; }
+  }
+  _evFrom = from; _evTo = to;
+  document.getElementById('rc-from-val').textContent = from;
+  document.getElementById('rc-to-val').textContent   = to;
+  // Clear active preset buttons
+  document.querySelectorAll('.rc-btn').forEach(b => b.classList.remove('active'));
+  if (window._renderCharts) setTimeout(() => window._renderCharts(), 20);
+}
+
+function setRange(from, to) {
+  document.getElementById('rc-from').value = from;
+  document.getElementById('rc-to').value   = to;
+  document.getElementById('rc-from-val').textContent = from;
+  document.getElementById('rc-to-val').textContent   = to;
+  _evFrom = from; _evTo = to;
+  document.querySelectorAll('.rc-btn').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  if (window._renderCharts) setTimeout(() => window._renderCharts(), 20);
+}
+
+function setRangeHorizonte() {
+  const p = window._chartParams;
+  if (!p) return;
+  setRange(Math.max(1, p.anos - 4), Math.min(50, p.anos + 4));
+  document.getElementById('rc-btn-horizonte').classList.add('active');
+}
+
+// ── INITIALIZE FORMATTED INPUTS on load ─────────────────────────────────────
+function initInputs() {
+  initFormatInput('precio',        350000);
+  initFormatInput('alquiler',      1400);
+  initFormatInput('inp-ibi',       1400);
+  initFormatInput('inp-comunidad', 1920);
+  initFormatInput('inp-seguro',    350);
+  initFormatInput('inp-mant',      1750);
+}
+// Run after DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initInputs);
+} else {
+  setTimeout(initInputs, 0);
+}
 
 function calcIRPF(g) {
   if (g<=0) return 0;
@@ -352,13 +416,50 @@ function showTab(id, btn) {
 
 let lastRows=[], lastPrecio=0, lastCapital=0, lastPlazoA=0, lastInvInicial=0, lastAnos=0;
 
+// ── NUMBER FORMAT UTILITIES ──────────────────────────────────────────────────
+function fmtInput(n) {
+  // Format number with . as thousands separator (no decimals)
+  if (isNaN(n) || n === '') return '';
+  return Math.round(+n).toLocaleString('es-ES');
+}
+
+function parseInput(id) {
+  // Parse formatted input: remove dots, return number
+  const el = gid(id);
+  if (!el) return 0;
+  const raw = el.value.replace(/\./g, '').replace(',', '.').trim();
+  return parseFloat(raw) || 0;
+}
+
+function initFormatInput(id, defaultVal) {
+  const el = gid(id);
+  if (!el) return;
+  el.setAttribute('type', 'text');
+  el.value = fmtInput(defaultVal);
+  el.addEventListener('focus', function() {
+    // On focus: show raw number for easy editing
+    this.value = this.value.replace(/\./g, '');
+  });
+  el.addEventListener('blur', function() {
+    // On blur: reformat with thousands separator
+    const raw = parseFloat(this.value.replace(/\./g, '').replace(',','.')) || 0;
+    this.value = fmtInput(raw);
+    // Trigger any attached oninput handlers
+    this.dispatchEvent(new Event('input'));
+  });
+  el.addEventListener('keypress', function(e) {
+    // Only allow digits
+    if (!/[0-9]/.test(e.key)) e.preventDefault();
+  });
+}
+
 function calcular() {
-  const precio    = +gid('precio').value;
+  const precio    = parseInput('precio');
   const entPct    = +gid('entrada').value/100;
   const tae       = +gid('interes').value/100;
   const plazoA    = +gid('plazo').value;
   const revalA    = +gid('reval').value/100;
-  const alqMes    = +gid('alquiler').value;
+  const alqMes    = parseInput('alquiler');
   const incAlqA   = +gid('inc-alq').value/100;
   const rentBolsa = +gid('bolsa').value/100;
   const anos      = +gid('anos').value;
@@ -385,10 +486,10 @@ function calcular() {
   const invInicial = entrada+gastosCompra;
 
   // Gastos anuales propiedad — leídos desde inputs editables
-  const ibiA    = +gid('inp-ibi').value      || precio*0.004;
-  const comunA  = +gid('inp-comunidad').value || (precio>400000?220:160)*12;
-  const seguroA = +gid('inp-seguro').value    || precio*0.001;
-  const mantA   = +gid('inp-mant').value      || precio*0.005;
+  const ibiA    = parseInput('inp-ibi')      || precio*0.004;
+  const comunA  = parseInput('inp-comunidad') || (precio>400000?220:160)*12;
+  const seguroA = parseInput('inp-seguro')    || precio*0.001;
+  const mantA   = parseInput('inp-mant')      || precio*0.005;
   const gastAnuA = ibiA+comunA+seguroA+mantA;
 
   // Simulación
@@ -425,10 +526,11 @@ function calcular() {
   const pvMun  = pvBase*0.29;
   const comV   = pventa*0.03;
   const gastVenta = irpfV+pvMun+comV;
-  const patriC = pventa-rowN.saldo-gastVenta;
+  // patriC: lo que obtienes de la venta, descontando TODOS los pagos reales
+  // = precio venta − deuda pendiente − gastos venta − gastos compra − intereses − gastos anuales
+  const patriC = pventa - rowN.saldo - gastVenta - gastosCompra - totalInt - (gastAnuA * anos);
 
   // Venta cartera bolsa — IRPF plusvalía bursátil
-  // La base imponible es la ganancia: cartera final − capital total aportado
   // Capital aportado = invInicial + suma de ahorros anuales invertidos
   let totalAportado = invInicial;
   rows.filter(r=>r.y<=anos).forEach(r => {
@@ -436,7 +538,8 @@ function calcular() {
   });
   const gananciasBolsa = Math.max(0, rowN.cartera - totalAportado);
   const irpfBolsa = calcIRPF(gananciasBolsa);
-  const patriA = rowN.cartera - irpfBolsa;   // neto tras impuestos bolsa
+  // patriA: cartera neta − alquiler total pagado
+  const patriA = rowN.cartera - irpfBolsa - totalAlq;
 
   const diff   = patriC-patriA;
   const ganador= diff>0?'compra':'alquiler';
@@ -448,36 +551,37 @@ function calcular() {
     <div class="vcard ${ganador==='compra'?'winner':''}">
       <div class="vc-label">🏠 Opción Compra — patrimonio neto tras venta</div>
       <div class="vc-val ${patriC>0?'g':'r'}">${fmt(patriC)}</div>
-      <div class="vc-sub">Precio venta ${fmt(pventa)} − deuda ${fmt(rowN.saldo)} − gastos venta ${fmt(gastVenta)}</div>
+      <div class="vc-sub">Precio venta ${fmt(pventa)} − deuda ${fmt(rowN.saldo)} − gastos venta ${fmt(gastVenta)} − intereses ${fmt(totalInt)} − gastos anuales ${fmt(gastAnuA*anos)} − gastos compra ${fmt(gastosCompra)}</div>
       <div class="vc-chips">
-        <span class="chip r">Gastos compra ${fmt(gastosCompra)}</span>
         <span class="chip r">Intereses ${fmt(totalInt)}</span>
-        <span class="chip a">Revalorización ${fmt(pventa-precio)}</span>
+        <span class="chip r">Gastos anuales ${fmt(gastAnuA*anos)}</span>
+        <span class="chip a">Revalorización +${fmt(pventa-precio)}</span>
       </div>
     </div>
     <div class="vcard ${ganador==='alquiler'?'winner':''}">
       <div class="vc-label">📈 Opción Alquiler + Inversión en bolsa</div>
       <div class="vc-val g">${fmt(patriA)}</div>
-      <div class="vc-sub">Cartera bruta ${fmt(rowN.cartera)} − IRPF plusvalía bolsa ${fmt(irpfBolsa)}</div>
+      <div class="vc-sub">Cartera bruta ${fmt(rowN.cartera)} − IRPF bolsa ${fmt(irpfBolsa)} − alquiler total ${fmt(totalAlq)}</div>
       <div class="vc-chips">
         <span class="chip r">Alquiler total ${fmt(totalAlq)}</span>
         <span class="chip r">IRPF bolsa ${fmt(irpfBolsa)}</span>
-        <span class="chip g">Cartera neta ${fmt(patriA)}</span>
+        <span class="chip g">Cartera bruta ${fmt(rowN.cartera)}</span>
       </div>
     </div>
   </div>
 
-  <div class="diff-bar">
+  <div class="diff-bar" style="flex-wrap:wrap;gap:12px 24px">
     <div>
       <div class="dl">Ventaja de ${ganador.toUpperCase()} en ${anos} años</div>
+      <div class="dv ${diff>0?'g':'r'}">${diff>0?'+':''}${fmt(diff)}</div>
     </div>
-    <div class="dv ${diff>0?'g':'r'}">${diff>0?'+':''}${fmt(diff)}</div>
-    <div class="diff-meta">
-      Cuota hipoteca: <strong>${fmt(cuotaMes)}/mes</strong> &nbsp;|&nbsp;
-      Capital aportado bolsa: <strong>${fmt(totalAportado)}</strong> &nbsp;|&nbsp;
-      Cartera bruta: <strong>${fmt(rowN.cartera)}</strong> &nbsp;|&nbsp;
-      IRPF venta bolsa: <strong style="color:var(--red)">${fmt(irpfBolsa)}</strong> &nbsp;|&nbsp;
-      Intereses hipoteca (vida): <strong>${fmt(totalIntHip)}</strong>
+    <div style="display:flex;flex-direction:column;gap:3px;border-left:1px solid var(--border);padding-left:20px">
+      <div class="diff-meta" style="color:var(--gold);font-size:9px;letter-spacing:1.5px;text-transform:uppercase">🏠 Compra — mensual</div>
+      <div class="diff-meta">Hipoteca: <strong>${fmt(cuotaMes)}/mes</strong> &nbsp;·&nbsp; Gastos casa: <strong>${fmt(Math.round(gastAnuA/12))}/mes</strong> &nbsp;·&nbsp; <span style="color:var(--gold)">Total: <strong>${fmt(Math.round(cuotaMes+gastAnuA/12))}/mes</strong></span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3px;border-left:1px solid var(--border);padding-left:20px">
+      <div class="diff-meta" style="color:var(--green);font-size:9px;letter-spacing:1.5px;text-transform:uppercase">📈 Alquiler — mensual</div>
+      <div class="diff-meta">Alquiler inicial: <strong>${fmt(parseInput('alquiler'))}/mes</strong> &nbsp;·&nbsp; Alquiler medio: <strong>${fmt(Math.round(totalAlq/anos/12))}/mes</strong></div>
     </div>
   </div>
 
@@ -492,28 +596,61 @@ function calcular() {
   <!-- RESUMEN -->
   <div class="tab-body on" id="t-resumen">
     <div class="section">
-      <div class="section-hd">KPIs principales <span>ambas opciones · horizonte ${anos} años</span></div>
-      <div class="kpi-grid">
-        <div class="kpi"><div class="kl">Precio compra</div><div class="kv a">${fmt(precio)}</div><div class="ks">${tipo==='segunda'?'2ª mano':'Vivienda nueva'}</div></div>
-        <div class="kpi"><div class="kl">Entrada pagada</div><div class="kv r">${fmt(entrada)}</div><div class="ks">${pct(gid('entrada').value)} del precio</div></div>
-        <div class="kpi"><div class="kl">Capital hipotecado</div><div class="kv">${fmt(capital)}</div><div class="ks">${pct(gid('interes').value)} TAE · ${gid('plazo').value}a</div></div>
-        <div class="kpi"><div class="kl">Cuota mensual</div><div class="kv">${fmt(cuotaMes)}</div><div class="ks">${fmt(cuotaA)}/año</div></div>
-        <div class="kpi"><div class="kl">Gastos de compra</div><div class="kv r">${fmt(gastosCompra)}</div><div class="ks">Impuestos + notaría + registro</div></div>
-        <div class="kpi"><div class="kl">Valor casa año ${anos}</div><div class="kv g">${fmt(rowN.valorCasa)}</div><div class="ks">${pct(gid('reval').value)}/año · +${fmt(pventa-precio)}</div></div>
-        <div class="kpi"><div class="kl">Intereses pagados (${anos}a)</div><div class="kv r">${fmt(totalInt)}</div><div class="ks">De ${fmt(totalIntHip)} vida hipoteca</div></div>
-        <div class="kpi"><div class="kl">Deuda restante año ${anos}</div><div class="kv ${rowN.saldo>0?'r':''}">${fmt(rowN.saldo)}</div><div class="ks">${rowN.saldo===0?'✓ Hipoteca cancelada':'Pendiente al vender'}</div></div>
-        <div class="kpi"><div class="kl">Alquiler total pagado</div><div class="kv r">${fmt(totalAlq)}</div><div class="ks">${anos} años</div></div>
-        <div class="kpi"><div class="kl">Cartera bruta año ${anos}</div><div class="kv g">${fmt(rowN.cartera)}</div><div class="ks">${pct(gid('bolsa').value)}/año compuesto</div></div>
-        <div class="kpi"><div class="kl">IRPF plusvalía bolsa</div><div class="kv r">${fmt(irpfBolsa)}</div><div class="ks">Ganancias: ${fmt(gananciasBolsa)}</div></div>
-        <div class="kpi"><div class="kl">Patrimonio neto compra</div><div class="kv ${patriC>0?'g':'r'}">${fmt(patriC)}</div><div class="ks">Tras todos los gastos</div></div>
-        <div class="kpi"><div class="kl">IRPF venta bolsa</div><div class="kv r">${fmt(irpfBolsa)}</div><div class="ks">Sobre ${fmt(gananciasBolsa)} de ganancias</div></div>
-        <div class="kpi"><div class="kl">Cartera neta bolsa</div><div class="kv g">${fmt(patriA)}</div><div class="ks">Tras IRPF plusvalía</div></div>
-        <div class="kpi"><div class="kl">Ventaja ${ganador}</div><div class="kv ${diff>0?'g':'r'}">${fmt(Math.abs(diff))}</div><div class="ks">Diferencia neta año ${anos}</div></div>
+      <div class="section-hd">🏠 Opción Compra <span>horizonte ${anos} años</span></div>
+
+      <div class="section-hd" style="font-size:8px;color:var(--text-dim);letter-spacing:2px;border:none;padding-bottom:2px;margin-bottom:8px;margin-top:0">INICIALES</div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px">
+        <div class="kpi"><div class="kl">Precio de compra</div><div class="kv a">${fmt(precio)}</div><div class="ks">${tipo==='segunda'?'2ª mano':'Vivienda nueva'}</div></div>
+        <div class="kpi"><div class="kl">Entrada pagada</div><div class="kv r">${fmt(entrada)}</div><div class="ks">${pct(gid('entrada').value)} del precio · capital propio</div></div>
+        <div class="kpi"><div class="kl">Gastos de compra</div><div class="kv r">${fmt(gastosCompra)}</div><div class="ks">Impuestos + notaría + registro + gestoría</div></div>
+      </div>
+
+      <div class="section-hd" style="font-size:8px;color:var(--text-dim);letter-spacing:2px;border:none;padding-bottom:2px;margin-bottom:8px;margin-top:0">RECURRENTES (MENSUALES)</div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px">
+        <div class="kpi"><div class="kl">Cuota hipoteca</div><div class="kv">${fmt(cuotaMes)}/mes</div><div class="ks">${fmt(cuotaA)}/año · ${pct(gid('interes').value)} TAE · ${gid('plazo').value}a</div></div>
+        <div class="kpi"><div class="kl">IBI mensualizado</div><div class="kv">${fmt(Math.round(ibiA/12))}/mes</div><div class="ks">${fmt(ibiA)}/año</div></div>
+        <div class="kpi"><div class="kl">Comunidad</div><div class="kv">${fmt(Math.round(comunA/12))}/mes</div><div class="ks">${fmt(comunA)}/año</div></div>
+        <div class="kpi"><div class="kl">Seguro + mantenimiento</div><div class="kv">${fmt(Math.round((seguroA+mantA)/12))}/mes</div><div class="ks">${fmt(seguroA+mantA)}/año</div></div>
+        <div class="kpi" style="border:1px solid var(--gold);background:rgba(201,168,76,0.06)"><div class="kl">Total mensual casa</div><div class="kv a">${fmt(Math.round(cuotaMes+gastAnuA/12))}/mes</div><div class="ks">Hipoteca + todos los gastos</div></div>
+      </div>
+
+      <div class="section-hd" style="font-size:8px;color:var(--text-dim);letter-spacing:2px;border:none;padding-bottom:2px;margin-bottom:8px;margin-top:0">FINALES (AÑO ${anos})</div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px">
+        <div class="kpi"><div class="kl">Precio de venta</div><div class="kv g">${fmt(pventa)}</div><div class="ks">Revalorización ${pct(gid('reval').value)}/año · +${fmt(pventa-precio)}</div></div>
+        <div class="kpi"><div class="kl">Gastos e impuestos venta</div><div class="kv r">${fmt(gastVenta)}</div><div class="ks">IRPF ${fmt(irpfV)} · Plusvalía ${fmt(pvMun)} · Comisión ${fmt(comV)}</div></div>
+        <div class="kpi"><div class="kl">Intereses totales pagados</div><div class="kv r">${fmt(totalInt)}</div><div class="ks">De ${fmt(totalIntHip)} en vida hipoteca completa</div></div>
+        <div class="kpi"><div class="kl">Reducción de hipoteca</div><div class="kv b">${fmt(capital-rowN.saldo)}</div><div class="ks">Deuda pendiente: ${fmt(rowN.saldo)}</div></div>
+        <div class="kpi"><div class="kl">Gastos vivienda pagados</div><div class="kv r">${fmt(gastAnuA*anos)}</div><div class="ks">IBI + comunidad + seguro + mant. · ${fmt(Math.round(gastAnuA/12))}/mes medio</div></div>
+        <div class="kpi" style="border:1px solid var(--gold);background:rgba(201,168,76,0.06)"><div class="kl">Patrimonio neto compra</div><div class="kv ${patriC>0?'g':'r'}">${fmt(patriC)}</div><div class="ks">Neto descontando todo</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-hd">📈 Opción Alquiler + Bolsa <span>horizonte ${anos} años</span></div>
+
+      <div class="section-hd" style="font-size:8px;color:var(--text-dim);letter-spacing:2px;border:none;padding-bottom:2px;margin-bottom:8px;margin-top:0">INICIALES</div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px">
+        <div class="kpi"><div class="kl">Inversión inicial</div><div class="kv a">${fmt(invInicial)}</div><div class="ks">Equivalente a entrada + gastos compra</div></div>
+      </div>
+
+      <div class="section-hd" style="font-size:8px;color:var(--text-dim);letter-spacing:2px;border:none;padding-bottom:2px;margin-bottom:8px;margin-top:0">RECURRENTES (MENSUALES)</div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px">
+        <div class="kpi"><div class="kl">Alquiler inicial</div><div class="kv">${fmt(parseInput('alquiler'))}/mes</div><div class="ks">Incremento ${pct(gid('inc-alq').value)}/año</div></div>
+        <div class="kpi"><div class="kl">Alquiler medio (${anos}a)</div><div class="kv">${fmt(Math.round(totalAlq/anos/12))}/mes</div><div class="ks">Promedio mensual durante el periodo</div></div>
+        <div class="kpi"><div class="kl">Alquiler mes ${anos}</div><div class="kv">${fmt(Math.round(rows[anos-1].alqAnual/12))}/mes</div><div class="ks">Alquiler en el año de venta</div></div>
+      </div>
+
+      <div class="section-hd" style="font-size:8px;color:var(--text-dim);letter-spacing:2px;border:none;padding-bottom:2px;margin-bottom:8px;margin-top:0">FINALES (AÑO ${anos})</div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px">
+        <div class="kpi"><div class="kl">Cartera bruta</div><div class="kv g">${fmt(rowN.cartera)}</div><div class="ks">Rentabilidad ${pct(gid('bolsa').value)}/año compuesto</div></div>
+        <div class="kpi"><div class="kl">IRPF plusvalía bolsa</div><div class="kv r">${fmt(irpfBolsa)}</div><div class="ks">Sobre ${fmt(gananciasBolsa)} de ganancias</div></div>
+        <div class="kpi"><div class="kl">Alquiler total pagado</div><div class="kv r">${fmt(totalAlq)}</div><div class="ks">${anos} años de alquiler</div></div>
+        <div class="kpi" style="border:1px solid var(--green);background:rgba(76,201,142,0.06)"><div class="kl">Patrimonio neto alquiler</div><div class="kv g">${fmt(patriA)}</div><div class="ks">Neto descontando todo</div></div>
       </div>
     </div>
     <div class="section">
       <div class="section-hd">Resumen en cascada <span>flujos totales de cada opción · año ${anos}</span></div>
-      <div class="waterfall-wrap"><svg id="wfResumen" class="wf-svg" height="200"></svg></div>
+      <div class="waterfall-wrap"><svg id="wfResumen" class="wf-svg" height="260"></svg></div>
       <p class="footnote">• Verde = entradas de valor · Rojo = salidas de valor · Dorado = resultado neto final. Las barras muestran el impacto acumulado de cada concepto sobre el patrimonio final.</p>
     </div>
     <div class="section">
@@ -529,7 +666,7 @@ function calcular() {
     <div class="section">
       <div class="section-hd">Cascada de valor — Opción Compra <span>resumen total · año ${anos}</span></div>
       <div class="waterfall-wrap"><svg id="wfCompra" class="wf-svg" height="220"></svg></div>
-      <p class="footnote">Cada barra muestra el impacto neto de ese concepto sobre el patrimonio final. Verde = suma valor · Rojo = resta valor · Dorado = resultado neto.</p>
+      <p class="footnote">Cada barra muestra el impacto neto de ese concepto sobre el patrimonio final. Verde = suma valor · Rojo = resta valor · Dorado = resultado neto.<br><strong style="color:var(--text-muted)">⚠ Los intereses de la hipoteca y los gastos anuales (IBI, comunidad, etc.) NO aparecen aquí</strong> porque son costes de vida equivalentes al alquiler del inquilino — ambos los pagan con su sueldo y ninguno los tiene en su patrimonio. El patrimonio neto solo recoge lo que obtienes de la transacción de venta.</p>
     </div>
 
     <div class="section">
@@ -729,7 +866,7 @@ function calcular() {
     <div class="section">
       <div class="section-hd">Cascada de valor — Opción Alquiler + Bolsa <span>resumen total · año ${anos}</span></div>
       <div class="waterfall-wrap"><svg id="wfAlquiler" class="wf-svg" height="220"></svg></div>
-      <p class="footnote">Cada barra muestra el impacto neto de ese concepto sobre el patrimonio final. Verde = suma valor · Rojo = resta valor · Dorado = resultado neto.</p>
+      <p class="footnote">Cada barra muestra el impacto neto de ese concepto sobre el patrimonio final. Verde = suma valor · Rojo = resta valor · Dorado = resultado neto.<br><strong style="color:var(--text-muted)">✓ El alquiler total pagado SÍ se descuenta del patrimonio neto.</strong> El patrimonio neto refleja todo el dinero real que has ganado o perdido teniendo en cuenta todos los pagos realizados.</p>
     </div>
 
     <div class="section">
@@ -817,7 +954,7 @@ function calcular() {
       <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
         <div class="kpi"><div class="kl">Capital inicial invertido</div><div class="kv a">${fmt(invInicial)}</div><div class="ks">Equivale a entrada + gastos compra</div></div>
         <div class="kpi"><div class="kl">Total alquiler pagado</div><div class="kv r">${fmt(totalAlq)}</div><div class="ks">${anos} años pagando</div></div>
-        <div class="kpi"><div class="kl">Alquiler inicial</div><div class="kv">${fmt(+gid('alquiler').value)}/mes</div><div class="ks">Incremento ${pct(gid('inc-alq').value)}/año</div></div>
+        <div class="kpi"><div class="kl">Alquiler inicial</div><div class="kv">${fmt(parseInput('alquiler'))}/mes</div><div class="ks">Incremento ${pct(gid('inc-alq').value)}/año</div></div>
         <div class="kpi"><div class="kl">Alquiler mes año ${anos}</div><div class="kv">${fmt(rows[anos-1].alqAnual/12)}/mes</div><div class="ks">Tras ${anos} años de incrementos</div></div>
         <div class="kpi"><div class="kl">Rentabilidad bolsa</div><div class="kv g">${pct(gid('bolsa').value)}</div><div class="ks">Anual compuesta</div></div>
         <div class="kpi"><div class="kl">Cartera bruta año ${anos}</div><div class="kv g">${fmt(rowN.cartera)}</div><div class="ks">Antes de impuestos venta</div></div>
@@ -894,6 +1031,19 @@ function calcular() {
   <div class="tab-body" id="t-evolucion">
     <div class="section">
       <div class="section-hd">Gráfico de evolución <span>patrimonio neto año a año</span></div>
+      <div class="range-controls">
+        <label>Año inicio: <strong id="rc-from-val">1</strong></label>
+        <input type="range" id="rc-from" min="1" max="49" step="1" value="1" oninput="updateRangeControls()">
+        <span class="rc-sep">→</span>
+        <label>Año fin: <strong id="rc-to-val">50</strong></label>
+        <input type="range" id="rc-to" min="2" max="50" step="1" value="50" oninput="updateRangeControls()">
+        <span class="rc-sep" style="margin-left:8px">Presets:</span>
+        <button class="rc-btn" onclick="setRange(1,10)">1-10a</button>
+        <button class="rc-btn" onclick="setRange(1,20)">1-20a</button>
+        <button class="rc-btn" onclick="setRange(1,30)">1-30a</button>
+        <button class="rc-btn active" onclick="setRange(1,50)">1-50a</button>
+        <button class="rc-btn" id="rc-btn-horizonte" onclick="setRangeHorizonte()">Horizonte ±4a</button>
+      </div>
       <div class="chart-box" style="height:320px"><canvas id="chartEv"></canvas></div>
     </div>
     <div class="section">
@@ -917,19 +1067,22 @@ function calcular() {
         </tr></thead>
         <tbody>
           ${(()=>{
-            let acumI=0;
+            let acumI=0, acumAlq=0;
             return rows.filter(r=>r.y<=50).map(r=>{
               acumI+=r.intA;
+              if(r.y<=anos) acumAlq+=r.alqAnual;
               const gp=r.valorCasa-precio;
               const irpfY=calcIRPF(Math.max(0,gp));
               const pvY=precio*0.6*Math.min(0.03*r.y,0.45)*0.29;
               const comY=r.valorCasa*0.03;
               const gvY=irpfY+pvY+comY;
-              const netY=r.valorCasa-r.saldo-gvY;
+              // netY: incluye todos los pagos reales acumulados
+              const netY=r.valorCasa-r.saldo-gvY-gastosCompra-acumI-gastAnuA*Math.min(r.y,anos);
               // IRPF bolsa hipotético si vendiera ese año
               const ganBolsaY=Math.max(0,r.cartera-totalAportado);
               const irpfBolsaY=calcIRPF(ganBolsaY);
-              const carteraNeta=r.cartera-irpfBolsaY;
+              // carteraNeta: descuenta alquiler acumulado
+              const carteraNeta=r.cartera-irpfBolsaY-acumAlq;
               const df=netY-carteraNeta;
               const isHoy=r.y===anos;
               return `<tr style="${isHoy?'background:rgba(201,168,76,0.06);outline:1px solid rgba(201,168,76,0.25);':''}">
@@ -968,8 +1121,8 @@ function calcular() {
   window._renderCharts = function() {
     const p = window._chartParams;
     if (!p) return;
-    drawChart('chartMain', p.rows, p.anos, p.precio, p.invInicial, p.totalAportado, false);
-    drawChart50('chartEv', p.rows, p.anos, p.precio, p.invInicial, p.totalAportado);
+    drawChart('chartMain', p.rows, p.anos, p.precio, p.invInicial, p.totalAportado, p.gastosCompra, p.gastAnuA, false);
+    drawChart50('chartEv', p.rows, p.anos, p.precio, p.invInicial, p.totalAportado, p.gastosCompra, p.gastAnuA, p.anos);
     drawWaterfall('wfCompra', buildWaterfallCompra(
       p.precio, p.entrada, p.gastosCompra, p.pventa, p.deudaRestante,
       p.irpfV, p.pvMun, p.comV, p.totalInt, p.gastAnuA*p.anos
@@ -986,7 +1139,7 @@ function calcular() {
   setTimeout(() => window._renderCharts(), 80);
 }
 
-function drawChart(id, rows, anos, precio, invInicial, totalAportado, allYears) {
+function drawChart(id, rows, anos, precio, invInicial, totalAportado, gastosCompra, gastAnuA, allYears) {
   const canvas = gid(id); if (!canvas) return;
   const W = Math.max(canvas.parentElement.clientWidth || 700, 300) - 28;
   const H = Math.max(canvas.parentElement.clientHeight || 250, 200) - 28;
@@ -1091,13 +1244,17 @@ function calcIRPF(g) {
 // ── WATERFALL DATA BUILDERS ──────────────────────────────────────────────────
 
 function buildWaterfallCompra(precio, entrada, gastosCompra, pventa, deudaRestante, irpfV, pvMun, comV, interesesPagados, gastosAnualesTotal) {
-  // Start from 0, build up to patrimonio neto
+  // patriC = pventa − deudaRestante − gastVenta − gastosCompra − totalInt − gastosAnualesTotal
+  // Descomposición completa de todos los flujos reales:
+  const revalorizacion = pventa - precio;
+  const equity = precio - entrada - deudaRestante; // capital banco recuperado
   return [
-    { label: 'Precio\nventa', val: pventa, type: 'pos' },
-    { label: 'Entrada\n+ gastos', val: -(entrada+gastosCompra), type: 'neg' },
+    { label: 'Inversión\ninicial', val: entrada+gastosCompra, type: 'pos' },
+    { label: 'Revalorización\ncasa', val: revalorizacion, type: 'pos' },
+    { label: 'Reducción\nhipoteca', val: equity, type: equity>=0?'pos':'neg' },
+    { label: 'Gastos de\ncompra', val: -gastosCompra, type: 'neg' },
     { label: 'Intereses\nhipoteca', val: -interesesPagados, type: 'neg' },
     { label: 'Gastos\nanuales', val: -gastosAnualesTotal, type: 'neg' },
-    { label: 'Deuda\npendiente', val: -deudaRestante, type: 'neg' },
     { label: 'IRPF\nventa', val: -irpfV, type: 'neg' },
     { label: 'Plusvalía\nmunicipal', val: -pvMun, type: 'neg' },
     { label: 'Comisión\nagencia', val: -comV, type: 'neg' },
@@ -1106,20 +1263,54 @@ function buildWaterfallCompra(precio, entrada, gastosCompra, pventa, deudaRestan
 }
 
 function buildWaterfallAlquiler(invInicial, totalAportado, carteraBruta, irpfBolsa, gananciasBolsa, totalAlq) {
+  // patriA = carteraBruta - irpfBolsa - totalAlq
+  // = invInicial + ahorrosExtra + gananciasBolsa - irpfBolsa - totalAlq ✓
+  const ahorrosExtra = totalAportado - invInicial;
   return [
-    { label: 'Capital\naportado', val: totalAportado, type: 'pos' },
-    { label: 'Rentab.\nbolsa', val: gananciasBolsa, type: 'pos' },
-    { label: 'Alquiler\ntotal', val: -totalAlq, type: 'neg' },
+    { label: 'Inversión\ninicial', val: invInicial, type: 'pos' },
+    ...(ahorrosExtra > 1 ? [{ label: 'Ahorros extra\ninvertidos', val: ahorrosExtra, type: 'pos' }] : []),
+    { label: 'Rentabilidad\nbolsa', val: gananciasBolsa, type: 'pos' },
     { label: 'IRPF\nplus. bolsa', val: -irpfBolsa, type: 'neg' },
+    { label: 'Alquiler\ntotal pagado', val: -totalAlq, type: 'neg' },
     { label: 'PATRIMONIO\nNETO', val: null, type: 'total' },
   ];
 }
 
 function buildWaterfallResumen(precio, entrada, gastosCompra, pventa, deudaRestante, irpfV, pvMun, comV, interesesPagados, gastosAnualesTotal,
   invInicial, carteraBruta, irpfBolsa, totalAlq, patriC, patriA) {
+
+  // COMPRA — 4 barras que suman exactamente a patriC:
+  // invInicial + compraPos + compraNeg = patriC
+  // compraPos = revalorización + equity acumulado = (pventa-precio) + (precio-entrada-deudaRestante)
+  //           = pventa - entrada - deudaRestante
+  // compraNeg = -(gastosCompra + intereses + gastosAnuales + irpfV + pvMun + comV)
+  //   (sin deudaRestante: ya está restado en compraPos como equity negativo)
+  // Suma: (entrada+gastosCompra) + (pventa-entrada-deudaRestante) - (gastosCompra+int+ganu+irpf+plusv+com)
+  //     = pventa - deudaRestante - int - ganu - irpf - plusv - com = patriC ✓
+  const compraPos = (pventa - precio) + (precio - entrada - deudaRestante);
+  const compraNeg = -(gastosCompra + interesesPagados + gastosAnualesTotal + irpfV + pvMun + comV);
+
+  // ALQUILER — 4 barras que suman exactamente a patriA:
+  // invInicial + alqPos + alqNeg = patriA
+  // alqPos = carteraBruta - invInicial  (ganancia bruta bolsa)
+  // alqNeg = -(irpfBolsa + totalAlq)
+  // Suma: invInicial + (carteraBruta-invInicial) - irpfBolsa - totalAlq = carteraBruta - irpfBolsa - totalAlq = patriA ✓
+  const alqPos = carteraBruta - invInicial;
+  const alqNeg = -(irpfBolsa + totalAlq);
+
   return [
-    { label: 'Compra\npatrimonio', val: patriC, type: 'bar-gold' },
-    { label: 'Alquiler+\nBolsa neta', val: patriA, type: 'bar-green' },
+    // COMPRA — todas son barras "delta" que arrancan desde invInicial como ancla
+    { label: 'COMPRA\nInv. inicial', val: invInicial, type: 'bar-gold-light', group: 'compra' },
+    { label: 'COMPRA\n+ Retornos',   val: compraPos,  type: 'bar-gold-pos',   group: 'compra' },
+    { label: 'COMPRA\n− Costes',     val: compraNeg,  type: 'bar-gold-neg',   group: 'compra' },
+    { label: 'COMPRA\nPatr. neto',   val: invInicial + compraPos + compraNeg, type: 'bar-gold', group: 'compra' },
+    // Separator
+    { label: '', val: 0, type: 'spacer' },
+    // ALQUILER
+    { label: 'ALQUILER\nInv. inicial', val: invInicial, type: 'bar-green-light', group: 'alquiler' },
+    { label: 'ALQUILER\n+ Retornos',   val: alqPos,     type: 'bar-green-pos',   group: 'alquiler' },
+    { label: 'ALQUILER\n− Costes',     val: alqNeg,     type: 'bar-green-neg',   group: 'alquiler' },
+    { label: 'ALQUILER\nPatr. neto',   val: invInicial + alqPos + alqNeg,       type: 'bar-green', group: 'alquiler' },
   ];
 }
 
@@ -1140,21 +1331,41 @@ function drawWaterfall(svgId, bars) {
   const ch = H - pad.t - pad.b;
 
   // Compute running totals
+  // bar-*-light  → anchor bar shown from 0, sets running = val
+  // bar-*-pos/neg → delta stacked on running
+  // bar-gold/bar-green → final neto, shown from 0 (absolute)
+  // total → shown from 0 to running
   let running = 0;
   const computed = bars.map(b => {
+    if (b.type === 'spacer') {
+      running = 0; // reset for next group
+      return { ...b, start: 0, end: 0, computed: 0 };
+    }
+    if (b.type === 'bar-gold-light' || b.type === 'bar-green-light') {
+      running = b.val;
+      return { ...b, start: 0, end: b.val, computed: b.val };
+    }
+    if (b.type === 'bar-gold-pos' || b.type === 'bar-green-pos' ||
+        b.type === 'bar-gold-neg' || b.type === 'bar-green-neg' || b.type === 'pos') {
+      const s = running;
+      running += b.val;
+      return { ...b, start: s, end: running, computed: running };
+    }
+    if (b.type === 'bar-gold' || b.type === 'bar-green') {
+      running = 0;
+      return { ...b, start: 0, end: b.val, computed: b.val };
+    }
     if (b.type === 'total') {
       return { ...b, start: Math.min(running, 0), end: running, computed: running };
     }
-    if (b.type === 'bar-gold' || b.type === 'bar-green') {
-      return { ...b, start: 0, end: b.val, computed: b.val };
-    }
+    // default delta (neg)
     const s = running;
     running += b.val;
     return { ...b, start: s, end: running, computed: running };
   });
 
   const allVals = computed.flatMap(b => [b.start, b.end]);
-  const minV = Math.min(0, ...allVals);
+  const minV = 0; // zero always at bottom — invInicial bars start from here
   const maxV = Math.max(0, ...allVals);
   const range = maxV - minV || 1;
 
@@ -1201,10 +1412,17 @@ function drawWaterfall(svgId, bars) {
     const bh = Math.max(2, bot - top);
 
     let fill, stroke;
-    if (b.type === 'total') { fill = '#c9a84c'; stroke = '#c9a84c'; }
-    else if (b.type === 'bar-gold') { fill = 'rgba(201,168,76,0.85)'; stroke = '#c9a84c'; }
-    else if (b.type === 'bar-green') { fill = 'rgba(76,201,142,0.85)'; stroke = '#4cc98e'; }
+    if (b.type === 'total')            { fill = '#c9a84c'; stroke = '#c9a84c'; }
+    else if (b.type === 'bar-gold')    { fill = 'rgba(201,168,76,0.9)';  stroke = '#c9a84c'; }
+    else if (b.type === 'bar-gold-light') { fill = 'rgba(201,168,76,0.35)'; stroke = '#c9a84c'; }
+    else if (b.type === 'bar-gold-pos')   { fill = 'rgba(76,201,142,0.7)';  stroke = '#4cc98e'; }
+    else if (b.type === 'bar-gold-neg')   { fill = 'rgba(224,85,85,0.7)';   stroke = '#e05555'; }
+    else if (b.type === 'bar-green')   { fill = 'rgba(76,201,142,0.9)';  stroke = '#4cc98e'; }
+    else if (b.type === 'bar-green-light') { fill = 'rgba(76,201,142,0.35)'; stroke = '#4cc98e'; }
+    else if (b.type === 'bar-green-pos')   { fill = 'rgba(76,201,142,0.7)';  stroke = '#4cc98e'; }
+    else if (b.type === 'bar-green-neg')   { fill = 'rgba(224,85,85,0.7)';   stroke = '#e05555'; }
     else if (b.type === 'pos') { fill = 'rgba(76,201,142,0.75)'; stroke = '#4cc98e'; }
+    else if (b.type === 'spacer') { fill = 'transparent'; stroke = 'transparent'; }
     else { fill = 'rgba(224,85,85,0.75)'; stroke = '#e05555'; }
 
     // Bar
@@ -1235,25 +1453,33 @@ function drawWaterfall(svgId, bars) {
 
 // ── 50-YEAR EVOLUTION CHART ───────────────────────────────────────────────────
 
-function drawChart50(id, rows, horizonte, precio, invInicial, totalAportado) {
+function drawChart50(id, rows, horizonte, precio, invInicial, totalAportado, gastosCompra, gastAnuA, anos) {
   const canvas = gid(id); if (!canvas) return;
   const W = Math.max(canvas.parentElement.clientWidth || 700, 300) - 28;
   const H = Math.max(parseInt(canvas.parentElement.style.height) || 320, 200) - 28;
   canvas.width=W; canvas.height=H;
   const ctx = canvas.getContext('2d');
 
-  const dr = rows.filter(r=>r.y<=50);
+  // Apply range from controls (default 1-50)
+  const evFrom = (typeof _evFrom !== 'undefined') ? _evFrom : 1;
+  const evTo   = (typeof _evTo   !== 'undefined') ? _evTo   : 50;
+  const dr = rows.filter(r=>r.y>=evFrom && r.y<=Math.min(evTo,50));
+
+  // Compute cumulative interest per year for chart
+  let _acumI=0, _acumAlq=0;
+  const _acumIntMap={}, _acumAlqMap={};
+  dr.forEach(r=>{ _acumI+=r.intA; _acumIntMap[r.y]=_acumI; _acumAlq+=r.alqAnual; _acumAlqMap[r.y]=_acumAlq; });
 
   const dataCasa = dr.map(r=>{
     const gp=r.valorCasa-precio;
     const irpfY=calcIRPF(Math.max(0,gp));
     const pvY=precio*0.6*Math.min(0.03*r.y,0.45)*0.29;
     const comY=r.valorCasa*0.03;
-    return Math.round(r.valorCasa-r.saldo-irpfY-pvY-comY);
+    return Math.round(r.valorCasa-r.saldo-irpfY-pvY-comY-gastosCompra-_acumIntMap[r.y]-gastAnuA*Math.min(r.y,anos));
   });
   const dataBolsa = dr.map(r=>{
     const ganBY=Math.max(0,r.cartera-totalAportado);
-    return Math.round(r.cartera-calcIRPF(ganBY));
+    return Math.round(r.cartera-calcIRPF(ganBY)-_acumAlqMap[r.y]);
   });
 
   const all=[...dataCasa,...dataBolsa];
@@ -1354,9 +1580,14 @@ function drawChart50(id, rows, horizonte, precio, invInicial, totalAportado) {
 
   // X labels
   ctx.fillStyle='#454a5e'; ctx.font='9px IBM Plex Mono'; ctx.textAlign='center'; ctx.globalAlpha=1;
+  const rangeSpan = evTo - evFrom;
+  const labelStep = rangeSpan <= 10 ? 1 : rangeSpan <= 20 ? 2 : rangeSpan <= 30 ? 5 : 10;
   dr.forEach((r,i)=>{
-    if(r.y===1||r.y%10===0||r.y===horizonte||r.y===50){
-      ctx.fillStyle=r.y===horizonte?'#c9a84c':'#454a5e';
+    const isFirst = r.y === dr[0].y, isLast = r.y === dr[dr.length-1].y;
+    const isHorizon = r.y === horizonte;
+    const showLabel = isFirst || isLast || isHorizon || (r.y % labelStep === 0);
+    if (showLabel) {
+      ctx.fillStyle = isHorizon ? '#c9a84c' : '#454a5e';
       ctx.fillText('Año '+r.y, toX(i), H-8);
     }
   });

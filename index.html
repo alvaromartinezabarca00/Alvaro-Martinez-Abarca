@@ -181,18 +181,18 @@ canvas { display: block; }
   display: none;
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
   background: var(--surface); border-top: 1px solid var(--border);
-  padding: 0; height: 56px;
+  padding: 0; height: 68px;
   grid-template-columns: repeat(5, 1fr);
 }
 .mobile-bottom-nav button {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 3px; background: transparent; border: none; color: var(--text-dim);
-  font-family: var(--font-m); font-size: 7px; letter-spacing: 0.5px;
-  text-transform: uppercase; cursor: pointer; padding: 6px 2px;
-  transition: color .15s; line-height: 1;
+  gap: 4px; background: transparent; border: none; color: var(--text-muted);
+  font-family: var(--font-m); font-size: 8px; letter-spacing: 0.5px;
+  text-transform: uppercase; cursor: pointer; padding: 8px 2px;
+  transition: color .15s; line-height: 1; opacity: 0.65;
 }
-.mobile-bottom-nav button .nav-icon { font-size: 16px; line-height: 1; }
-.mobile-bottom-nav button.active { color: var(--gold); opacity: 1; }
+.mobile-bottom-nav button .nav-icon { font-size: 19px; line-height: 1; }
+.mobile-bottom-nav button.active { color: var(--gold); opacity: 1; background: rgba(201,168,76,0.08); }
 .mobile-bottom-nav button.active .nav-icon { color: var(--gold); }
 
 /* Mobile sidebar overlay */
@@ -217,7 +217,7 @@ canvas { display: block; }
   line-height: 1; flex-shrink: 0;
 }
 .mobile-calc-fab {
-  position: fixed; bottom: 68px; right: 16px; z-index: 90;
+  position: fixed; bottom: 80px; right: 16px; z-index: 90;
   background: var(--gold); color: #0b0c0f; border: none; border-radius: 28px;
   padding: 12px 20px; font-family: var(--font-d); font-size: 14px; font-weight: 700;
   box-shadow: 0 4px 20px rgba(201,168,76,0.4); cursor: pointer; white-space: nowrap;
@@ -245,7 +245,7 @@ canvas { display: block; }
   .sidebar.open { transform: translateX(0) !important; }
 
   /* Results area */
-  .results { overflow-y: visible !important; padding-bottom: 80px; }
+  .results { overflow-y: visible !important; padding-bottom: 90px; }
 
   /* Tab nav: horizontal scroll */
   .tab-nav { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
@@ -262,11 +262,21 @@ canvas { display: block; }
   .vc-chips { gap: 4px; margin-top: 5px; }
   .chip { font-size: 8px !important; padding: 2px 6px !important; }
 
-  /* Diff bar: compacto en mobile */
-  .diff-bar { flex-direction: column; gap: 8px; padding: 10px 14px; }
-  .diff-bar .dl { font-size: 8px !important; }
-  .diff-bar .dv { font-size: 18px !important; }
-  .diff-meta { font-size: 9px !important; line-height: 1.6; }
+  /* Diff bar: grid 2x2 en mobile */
+  .diff-bar {
+    display: grid !important;
+    grid-template-columns: auto 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: 6px 12px !important;
+    padding: 10px 14px !important;
+    align-items: center;
+  }
+  .diff-bar > div:first-child { grid-column: 1; grid-row: 1 / 3; }
+  .diff-bar > div:nth-child(2) { grid-column: 2; grid-row: 1; }
+  .diff-bar > div:nth-child(3) { grid-column: 2; grid-row: 2; }
+  .diff-bar .dl { font-size: 8px !important; letter-spacing: 1px; }
+  .diff-bar .dv { font-size: 20px !important; line-height: 1.1; }
+  .diff-meta { font-size: 8.5px !important; line-height: 1.7; }
 
   /* KPI grids: 2 cols on mobile */
   .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 6px !important; }
@@ -1469,7 +1479,8 @@ function drawChart(id, rows, anos, precio, invInicial, totalAportado, gastosComp
   const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
   const n=dr.length;
   const toX=i=>pad.l+(n<=1?cw/2:i/(n-1)*cw);
-  const toY=v=>pad.t+ch-((v-minV)/(maxV-minV||1))*ch;
+  const _toYraw=v=>pad.t+ch-((v-minV)/(maxV-minV||1))*ch;
+  const toY=v=>Math.min(pad.t+ch, Math.max(pad.t, _toYraw(v)));
 
   ctx.strokeStyle='#272b36'; ctx.lineWidth=1;
   for(let i=0;i<=4;i++){
@@ -1485,6 +1496,12 @@ function drawChart(id, rows, anos, precio, invInicial, totalAportado, gastosComp
     ctx.beginPath(); ctx.moveTo(pad.l,zy); ctx.lineTo(W-pad.r,zy); ctx.stroke();
     ctx.setLineDash([]);
   }
+
+  // Clip data drawing to chart bounds
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(pad.l, pad.t, cw, ch);
+  ctx.clip();
 
   const fillArea=(data,color)=>{
     ctx.beginPath();

@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compra vs Alquiler — Madrid</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0c0f;
+  --surface: #13151a;
+  --surface2: #1a1d24;
+  --surface3: #20232c;
+  --border: #272b36;
+  --border2: #1e2028;
+  --gold: #c9a84c;
+  --gold-dim: rgba(201,168,76,0.12);
+  --green: #4cc98e;
+  --green-dim: rgba(76,201,142,0.12);
+  --red: #e05555;
+  --red-dim: rgba(224,85,85,0.12);
+  --blue: #5b9cf6;
+  --blue-dim: rgba(91,156,246,0.12);
+  --text: #dde1ec;
+  --text-muted: #7a8099;
+  --text-dim: #454a5e;
+  --font-d: 'Playfair Display', serif;
+  --font-m: 'IBM Plex Mono', monospace;
+  --font-s: 'IBM Plex Sans', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-s); font-size: 13px; line-height: 1.55; display: flex; flex-direction: column; }
+
+header {
+  padding: 24px 32px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 20px;
+  background: linear-gradient(135deg, rgba(201,168,76,0.04) 0%, transparent 60%);
+  flex-shrink: 0;
+}
+header h1 { font-family: var(--font-d); font-size: 34px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+header h1 em { color: var(--gold); font-style: normal; }
+.header-meta { margin-left: auto; text-align: right; }
+.header-meta p { font-family: var(--font-m); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); }
+
+.app { display: grid; grid-template-columns: 330px 1fr; flex: 1; overflow: hidden; }
+
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 20px; }
+
+.s-block { display: flex; flex-direction: column; gap: 10px; }
+.s-block-title { font-family: var(--font-m); font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); padding-bottom: 7px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
+.s-block-title::before { content: '▸'; font-size: 8px; }
+
+.field label { display: block; font-family: var(--font-m); font-size: 10px; color: var(--text-muted); margin-bottom: 5px; }
+.field label small { color: var(--text-dim); font-size: 9px; }
+.inp-wrap { display: flex; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; transition: border-color .15s; }
+.inp-wrap:focus-within { border-color: var(--gold); }
+.inp-wrap input { flex: 1; background: transparent; border: none; color: var(--text); font-family: var(--font-m); font-size: 13px; padding: 8px 10px; outline: none; min-width: 0; }
+.inp-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.inp-unit { padding: 0 10px; color: var(--text-dim); font-family: var(--font-m); font-size: 10px; border-left: 1px solid var(--border); height: 34px; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0; }
+
+.toggle { display: flex; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; background: var(--surface2); }
+.toggle button { flex: 1; padding: 8px 6px; background: transparent; border: none; color: var(--text-muted); font-family: var(--font-m); font-size: 10px; cursor: pointer; transition: all .15s; }
+.toggle button.on { background: var(--gold); color: #0b0c0f; font-weight: 500; }
+
+.sl-wrap { display: flex; flex-direction: column; gap: 5px; }
+.sl-hd { display: flex; justify-content: space-between; font-family: var(--font-m); font-size: 10px; color: var(--text-muted); }
+.sl-hd strong { color: var(--gold); }
+input[type=range] { width: 100%; -webkit-appearance: none; background: var(--border); height: 2px; border-radius: 2px; outline: none; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px; background: var(--gold); border-radius: 50%; cursor: pointer; border: 2px solid var(--bg); }
+
+.calc-btn { width: 100%; padding: 13px; background: var(--gold); color: #0b0c0f; border: none; font-family: var(--font-d); font-size: 15px; font-weight: 700; cursor: pointer; border-radius: 3px; transition: opacity .2s; margin-top: 4px; }
+.calc-btn:hover { opacity: .88; }
+
+.results { overflow-y: auto; display: flex; flex-direction: column; }
+
+.verdict { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.vcard { padding: 20px 24px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden; }
+.vcard:last-child { border-right: none; }
+.vcard.winner { background: linear-gradient(135deg, rgba(201,168,76,0.06) 0%, transparent 50%); }
+.vcard.winner::after { content: 'MEJOR OPCIÓN'; position: absolute; top: 13px; right: 13px; background: var(--gold); color: #0b0c0f; font-family: var(--font-m); font-size: 8px; font-weight: 500; letter-spacing: 2px; padding: 3px 7px; border-radius: 2px; }
+.vc-label { font-family: var(--font-m); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+.vc-val { font-family: var(--font-d); font-size: 36px; font-weight: 900; line-height: 1; }
+.vc-val.g { color: var(--green); } .vc-val.r { color: var(--red); }
+.vc-sub { font-family: var(--font-m); font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+.vc-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.chip { font-family: var(--font-m); font-size: 9px; padding: 3px 8px; border-radius: 2px; }
+.chip.r { background: var(--red-dim); color: var(--red); border: 1px solid rgba(224,85,85,.2); }
+.chip.g { background: var(--green-dim); color: var(--green); border: 1px solid rgba(76,201,142,.2); }
+.chip.a { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(201,168,76,.2); }
+.chip.b { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(91,156,246,.2); }
+
+.diff-bar { padding: 12px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: var(--surface); flex-shrink: 0; }
+.diff-bar .dl { font-family: var(--font-m); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+.diff-bar .dv { font-family: var(--font-d); font-size: 22px; font-weight: 700; }
+.diff-bar .dv.g { color: var(--green); } .diff-bar .dv.r { color: var(--red); }
+.diff-meta { font-family: var(--font-m); font-size: 10px; color: var(--text-dim); }
+.diff-meta strong { color: var(--text); }
+
+.tab-nav { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; overflow-x: auto; }
+.tab-nav button { padding: 10px 14px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); font-family: var(--font-m); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all .15s; white-space: nowrap; margin-bottom: -1px; }
+.tab-nav button.on { color: var(--gold); border-bottom-color: var(--gold); }
+
+.tab-body { display: none; padding: 22px 24px; }
+.tab-body.on { display: block; }
+
+.section { margin-bottom: 26px; }
+.section-hd { font-family: var(--font-m); font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 13px; display: flex; align-items: center; justify-content: space-between; }
+.section-hd span { color: var(--text-muted); font-size: 10px; letter-spacing: 0; text-transform: none; font-family: var(--font-s); }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 8px; margin-bottom: 18px; }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 12px 13px; display: flex; flex-direction: column; gap: 2px; }
+.kl { font-family: var(--font-m); font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); }
+.kv { font-family: var(--font-d); font-size: 19px; font-weight: 700; line-height: 1.15; }
+.kv.g { color: var(--green); } .kv.r { color: var(--red); } .kv.a { color: var(--gold); } .kv.b { color: var(--blue); }
+.ks { font-family: var(--font-m); font-size: 9px; color: var(--text-dim); margin-top: 1px; }
+
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead th { text-align: left; font-family: var(--font-m); font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); padding: 7px 11px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+thead th.ra { text-align: right; }
+tbody td { padding: 8px 11px; font-family: var(--font-m); font-size: 11px; border-bottom: 1px solid var(--border2); vertical-align: middle; }
+tbody td.ra { text-align: right; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr.total td { background: var(--surface); border-top: 1px solid var(--border); border-bottom: none; }
+.cm { color: var(--text-muted); } .cd { color: var(--text-dim); font-size: 9px; }
+.cg { color: var(--green); } .cr { color: var(--red); } .ca { color: var(--gold); } .cb { color: var(--blue); }
+.note { display: block; font-size: 9px; color: var(--text-dim); margin-top: 2px; line-height: 1.5; }
+.tag { display: inline-block; font-family: var(--font-m); font-size: 8px; padding: 1px 5px; border-radius: 2px; margin-left: 5px; vertical-align: middle; background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(91,156,246,.2); }
+.tag.g { background: var(--green-dim); color: var(--green); border-color: rgba(76,201,142,.2); }
+.tag.a { background: var(--gold-dim); color: var(--gold); border-color: rgba(201,168,76,.2); }
+
+.amort-bar { width: 120px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; display: flex; }
+.amort-int { background: var(--red); opacity: .75; }
+.amort-cap { background: var(--green); opacity: .75; }
+
+.chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 14px; position: relative; height: 250px; margin-bottom: 6px; }
+canvas { display: block; }
+
+.mort-banner { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 18px; }
+.mort-cell { background: var(--surface2); padding: 12px 14px; }
+.mort-cell .ml { font-family: var(--font-m); font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
+.mort-cell .mv { font-family: var(--font-d); font-size: 18px; font-weight: 700; }
+
+.alert-box { border-radius: 3px; padding: 11px 14px; font-family: var(--font-m); font-size: 10px; line-height: 1.7; margin-bottom: 16px; }
+.alert-gold { background: var(--gold-dim); border: 1px solid rgba(201,168,76,.25); color: var(--gold); }
+.alert-green { background: var(--green-dim); border: 1px solid rgba(76,201,142,.25); color: var(--green); }
+.alert-blue { background: var(--blue-dim); border: 1px solid rgba(91,156,246,.25); color: var(--blue); }
+
+.footnote { font-family: var(--font-m); font-size: 9px; color: var(--text-dim); margin-top: 10px; line-height: 1.7; }
+
+.placeholder-msg { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-dim); font-family: var(--font-m); font-size: 11px; gap: 14px; text-align: center; padding: 40px; }
+.placeholder-msg .ico { font-size: 48px; opacity: .25; }
+
+.waterfall-wrap { overflow-x: auto; margin-bottom: 6px; }
+.wf-svg { display: block; width: 100%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div><h1>Compra <em>vs</em> Alquiler</h1></div>
+  <div class="header-meta">
+    <p>Calculadora fiscal · Madrid · 2025</p>
+    <p style="margin-top:2px;">Impuestos vigentes Comunidad de Madrid</p>
+  </div>
+</header>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="s-block">
+      <div class="s-block-title">Inmueble</div>
+      <div class="field">
+        <label>Precio de compra</label>
+        <div class="inp-wrap"><input type="number" id="precio" value="350000" oninput="actualizarGastosSugeridos()"><span class="inp-unit">€</span></div>
+      </div>
+      <div class="field">
+        <label>Tipo de vivienda</label>
+        <div class="toggle">
+          <button id="btn-seg" class="on" onclick="setTipo('segunda')">2ª Mano</button>
+          <button id="btn-nue" onclick="setTipo('nueva')">Nueva</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Revalorización anual <small>(Madrid histórico 3–5%)</small></label>
+        <div class="sl-wrap">
+          <div class="sl-hd"><span>Revalorización</span><strong id="rv">3%</strong></div>
+          <input type="range" id="reval" min="0" max="10" step="0.25" value="3" oninput="gid('rv').textContent=this.value+'%'">
+        </div>
+      </div>
+    </div>
+
+    <div class="s-block">
+      <div class="s-block-title">Hipoteca</div>
+      <div class="field">
+        <label>Entrada <small>(% sobre precio, mín. recomendado 20%)</small></label>
+        <div class="sl-wrap">
+          <div class="sl-hd"><span>Entrada</span><strong id="ev">20%</strong></div>
+          <input type="range" id="entrada" min="10" max="50" step="1" value="20" oninput="gid('ev').textContent=this.value+'%'">
+        </div>
+      </div>
+      <div class="field">
+        <label>Tipo de interés anual (TAE)</label>
+        <div class="sl-wrap">
+          <div class="sl-hd"><span>Interés</span><strong id="iv">3.5%</strong></div>
+          <input type="range" id="interes" min="1" max="8" step="0.1" value="3.5" oninput="gid('iv').textContent=parseFloat(this.value).toFixed(1)+'%'">
+        </div>
+      </div>
+      <div class="field">
+        <label>Plazo hipoteca</label>
+        <div class="sl-wrap">
+          <div class="sl-hd"><span>Plazo</span><strong id="pv">30 años</strong></div>
+          <input type="range" id="plazo" min="10" max="40" step="5" value="30" oninput="gid('pv').textContent=this.value+' años'">
+        </div>
+      </div>
+    </div>
+
+    <div class="s-block">
+      <div class="s-block-title">Alquiler & Inversión</div>
+      <div class="field">
+        <label>Alquiler mensual equivalente</label>
+        <div class="inp-wrap"><input type="number" id="alquiler" value="1400"><span class="inp-unit">€/mes</span></div>
+      </div>
+      <div class="field">
+        <label>Incremento anual del alquiler</label>
+        <div class="sl-wrap">
+          <div class="sl-hd"><span>Incremento</span><strong id="iav">3%</strong></div>
+          <input type="range" id="inc-alq" min="0" max="8" step="0.25" value="3" oninput="gid('iav').textContent=this.value+'%'">
+        </div>
+      </div>
+      <div class="field">
+        <label>Rentabilidad anual en bolsa</label>
+        <div class="sl-wrap">
+          <div class="sl-hd"><span>Rentabilidad</span><strong id="bv">7%</strong></div>
+          <input type="range" id="bolsa" min="2" max="15" step="0.25" value="7" oninput="gid('bv').textContent=this.value+'%'">
+        </div>
+      </div>
+    </div>
+
+    <div class="s-block">
+      <div class="s-block-title">Gastos anuales propiedad</div>
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text-dim);margin-bottom:6px;line-height:1.6;">
+        Valores sugeridos según precio y tipo de vivienda. Edita libremente.
+      </div>
+      <div class="field">
+        <label>IBI anual <small>(~0,40% valor catastral, varía por zona)</small></label>
+        <div class="inp-wrap"><input type="number" id="inp-ibi" oninput="updateGastoPreview()" value="1400"><span class="inp-unit">€/año</span></div>
+      </div>
+      <div class="field">
+        <label>Comunidad de propietarios <small>(portero, piscina, ascensor…)</small></label>
+        <div class="inp-wrap"><input type="number" id="inp-comunidad" oninput="updateGastoPreview()" value="1920"><span class="inp-unit">€/año</span></div>
+      </div>
+      <div class="field">
+        <label>Seguro del hogar <small>(obligatorio con hipoteca)</small></label>
+        <div class="inp-wrap"><input type="number" id="inp-seguro" oninput="updateGastoPreview()" value="350"><span class="inp-unit">€/año</span></div>
+      </div>
+      <div class="field">
+        <label>Mantenimiento y reparaciones <small>(~0,5% nueva · ~1% 2ª mano)</small></label>
+        <div class="inp-wrap"><input type="number" id="inp-mant" oninput="updateGastoPreview()" value="1750"><span class="inp-unit">€/año</span></div>
+      </div>
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text-dim);padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;margin-top:2px;">
+        Total estimado: <strong id="gasto-total-preview" style="color:var(--gold)">5.420 €/año</strong>
+      </div>
+    </div>
+
+    <div class="s-block">
+      <div class="s-block-title">Horizonte temporal</div>
+      <div class="field">
+        <div class="sl-wrap">
+          <div class="sl-hd"><span>Años hasta venta</span><strong id="anv">15 años</strong></div>
+          <input type="range" id="anos" min="1" max="40" step="1" value="15" oninput="gid('anv').textContent=this.value+' años'">
+        </div>
+      </div>
+    </div>
+
+    <button class="calc-btn" onclick="calcular()">Calcular →</button>
+  </aside>
+
+  <div class="results" id="results">
+    <div class="placeholder-msg">
+      <div class="ico">⌥</div>
+      <div>Introduce los parámetros y pulsa <strong style="color:var(--gold)">Calcular</strong> para ver el análisis completo</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const gid = id => document.getElementById(id);
+let tipo = 'segunda';
+
+function setTipo(t) {
+  tipo = t;
+  gid('btn-seg').classList.toggle('on', t==='segunda');
+  gid('btn-nue').classList.toggle('on', t==='nueva');
+  actualizarGastosSugeridos();
+}
+
+function actualizarGastosSugeridos() {
+  const precio = +gid('precio').value || 350000;
+  const esNueva = tipo === 'nueva';
+  // IBI: ~0.4% sobre valor catastral estimado (60% del precio de mercado)
+  const ibiSug    = Math.round(precio * 0.004);
+  // Comunidad: nueva sin extras 80-100€/mes, segunda con portero/piscina 140-200€/mes
+  const comunSug  = Math.round((esNueva ? 90 : 160) * 12);
+  // Seguro: ~0.10% del valor para nueva (más barata), ~0.12% segunda
+  const seguroSug = Math.round(precio * (esNueva ? 0.001 : 0.0012));
+  // Mantenimiento: 0.5% nueva (poco desgaste), 1% segunda mano (más roturas)
+  const mantSug   = Math.round(precio * (esNueva ? 0.005 : 0.01));
+
+  gid('inp-ibi').value       = ibiSug;
+  gid('inp-comunidad').value = comunSug;
+  gid('inp-seguro').value    = seguroSug;
+  gid('inp-mant').value      = mantSug;
+  updateGastoPreview();
+}
+
+function updateGastoPreview() {
+  const total = (+gid('inp-ibi').value||0)
+              + (+gid('inp-comunidad').value||0)
+              + (+gid('inp-seguro').value||0)
+              + (+gid('inp-mant').value||0);
+  const el = gid('gasto-total-preview');
+  if (el) el.textContent = new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(total) + '/año';
+}
+
+const fmt = n => new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
+const fmtd = (n,d=2) => new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
+const pct = (n, d=1) => (+n).toFixed(d)+'%';
+
+function calcIRPF(g) {
+  if (g<=0) return 0;
+  let t = 0;
+  if (g>300000) t += (g-300000)*0.28;
+  if (g>200000) t += Math.min(g-200000,100000)*0.26;
+  if (g>50000)  t += Math.min(g-50000,150000)*0.23;
+  if (g>6000)   t += Math.min(g-6000,44000)*0.21;
+  t += Math.min(g,6000)*0.19;
+  return t;
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-body').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.tab-nav button').forEach(b=>b.classList.remove('on'));
+  gid(id).classList.add('on');
+  btn.classList.add('on');
+  // Redraw charts now that their container is visible and has real dimensions
+  if (window._renderCharts) {
+    setTimeout(() => window._renderCharts(), 30);
+  }
+}
+
+let lastRows=[], lastPrecio=0, lastCapital=0, lastPlazoA=0, lastInvInicial=0, lastAnos=0;
+
+function calcular() {
+  const precio    = +gid('precio').value;
+  const entPct    = +gid('entrada').value/100;
+  const tae       = +gid('interes').value/100;
+  const plazoA    = +gid('plazo').value;
+  const revalA    = +gid('reval').value/100;
+  const alqMes    = +gid('alquiler').value;
+  const incAlqA   = +gid('inc-alq').value/100;
+  const rentBolsa = +gid('bolsa').value/100;
+  const anos      = +gid('anos').value;
+
+  const entrada   = precio*entPct;
+  const capital   = precio-entrada;
+  const im        = tae/12;
+  const nPagos    = plazoA*12;
+  const cuotaMes  = capital*(im*Math.pow(1+im,nPagos))/(Math.pow(1+im,nPagos)-1);
+  const cuotaA    = cuotaMes*12;
+  const totalHip  = cuotaMes*nPagos;
+  const totalIntHip = totalHip-capital;
+
+  // Impuestos compra
+  const itpTipo=0.06, ivaTipo=0.10, ajdTipo=0.0075;
+  const itp = tipo==='segunda'?precio*itpTipo:0;
+  const iva = tipo==='nueva'?precio*ivaTipo:0;
+  const ajd = tipo==='nueva'?precio*ajdTipo:0;
+  const notaria  = Math.min(Math.max(precio*0.0015,800),2500);
+  const registro = Math.min(Math.max(precio*0.001,400),2000);
+  const gestoria = 400;
+  const tasacion = Math.min(Math.max(precio*0.001,250),600);
+  const gastosCompra = itp+iva+ajd+notaria+registro+gestoria+tasacion;
+  const invInicial = entrada+gastosCompra;
+
+  // Gastos anuales propiedad — leídos desde inputs editables
+  const ibiA    = +gid('inp-ibi').value      || precio*0.004;
+  const comunA  = +gid('inp-comunidad').value || (precio>400000?220:160)*12;
+  const seguroA = +gid('inp-seguro').value    || precio*0.001;
+  const mantA   = +gid('inp-mant').value      || precio*0.005;
+  const gastAnuA = ibiA+comunA+seguroA+mantA;
+
+  // Simulación
+  let saldo=capital, cartera=invInicial, alqAct=alqMes;
+  let totalInt=0, totalAlq=0;
+  const rows=[];
+  const maxY = Math.max(50, plazoA);
+
+  for (let y=1; y<=maxY; y++) {
+    let intA=0, amortiA=0;
+    if (y<=plazoA) {
+      for (let m=0;m<12;m++) {
+        const iM=saldo*im, aM=cuotaMes-iM;
+        intA+=iM; amortiA+=aM; saldo=Math.max(0,saldo-aM);
+      }
+    }
+    if (y<=anos) totalInt+=intA;
+    const valorCasa = precio*Math.pow(1+revalA,y);
+    const alqAnual  = alqAct*12;
+    if (y<=anos) totalAlq+=alqAnual;
+    const costeProp = (y<=plazoA?cuotaA:0)+gastAnuA;
+    const ahorro    = Math.max(0,costeProp-alqAnual);
+    cartera = cartera*(1+rentBolsa)+(y<=anos?ahorro:0);
+    alqAct  = alqAct*(1+incAlqA);
+    rows.push({y,intA,amortiA,saldo,valorCasa,cartera,alqAnual,costeProp});
+  }
+
+  // Venta inmueble
+  const rowN   = rows[anos-1];
+  const pventa = rowN.valorCasa;
+  const ganP   = pventa-precio;
+  const irpfV  = calcIRPF(Math.max(0,ganP));
+  const pvBase = precio*0.60*Math.min(0.03*anos,0.45);
+  const pvMun  = pvBase*0.29;
+  const comV   = pventa*0.03;
+  const gastVenta = irpfV+pvMun+comV;
+  const patriC = pventa-rowN.saldo-gastVenta;
+
+  // Venta cartera bolsa — IRPF plusvalía bursátil
+  // La base imponible es la ganancia: cartera final − capital total aportado
+  // Capital aportado = invInicial + suma de ahorros anuales invertidos
+  let totalAportado = invInicial;
+  rows.filter(r=>r.y<=anos).forEach(r => {
+    totalAportado += Math.max(0, r.costeProp - r.alqAnual);
+  });
+  const gananciasBolsa = Math.max(0, rowN.cartera - totalAportado);
+  const irpfBolsa = calcIRPF(gananciasBolsa);
+  const patriA = rowN.cartera - irpfBolsa;   // neto tras impuestos bolsa
+
+  const diff   = patriC-patriA;
+  const ganador= diff>0?'compra':'alquiler';
+
+  lastRows=rows; lastPrecio=precio; lastCapital=capital; lastPlazoA=plazoA; lastInvInicial=invInicial; lastAnos=anos;
+
+  gid('results').innerHTML = `
+  <div class="verdict">
+    <div class="vcard ${ganador==='compra'?'winner':''}">
+      <div class="vc-label">🏠 Opción Compra — patrimonio neto tras venta</div>
+      <div class="vc-val ${patriC>0?'g':'r'}">${fmt(patriC)}</div>
+      <div class="vc-sub">Precio venta ${fmt(pventa)} − deuda ${fmt(rowN.saldo)} − gastos venta ${fmt(gastVenta)}</div>
+      <div class="vc-chips">
+        <span class="chip r">Gastos compra ${fmt(gastosCompra)}</span>
+        <span class="chip r">Intereses ${fmt(totalInt)}</span>
+        <span class="chip a">Revalorización ${fmt(pventa-precio)}</span>
+      </div>
+    </div>
+    <div class="vcard ${ganador==='alquiler'?'winner':''}">
+      <div class="vc-label">📈 Opción Alquiler + Inversión en bolsa</div>
+      <div class="vc-val g">${fmt(patriA)}</div>
+      <div class="vc-sub">Cartera bruta ${fmt(rowN.cartera)} − IRPF plusvalía bolsa ${fmt(irpfBolsa)}</div>
+      <div class="vc-chips">
+        <span class="chip r">Alquiler total ${fmt(totalAlq)}</span>
+        <span class="chip r">IRPF bolsa ${fmt(irpfBolsa)}</span>
+        <span class="chip g">Cartera neta ${fmt(patriA)}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="diff-bar">
+    <div>
+      <div class="dl">Ventaja de ${ganador.toUpperCase()} en ${anos} años</div>
+    </div>
+    <div class="dv ${diff>0?'g':'r'}">${diff>0?'+':''}${fmt(diff)}</div>
+    <div class="diff-meta">
+      Cuota hipoteca: <strong>${fmt(cuotaMes)}/mes</strong> &nbsp;|&nbsp;
+      Capital aportado bolsa: <strong>${fmt(totalAportado)}</strong> &nbsp;|&nbsp;
+      Cartera bruta: <strong>${fmt(rowN.cartera)}</strong> &nbsp;|&nbsp;
+      IRPF venta bolsa: <strong style="color:var(--red)">${fmt(irpfBolsa)}</strong> &nbsp;|&nbsp;
+      Intereses hipoteca (vida): <strong>${fmt(totalIntHip)}</strong>
+    </div>
+  </div>
+
+  <div class="tab-nav">
+    <button class="on" onclick="showTab('t-resumen',this)">Resumen</button>
+    <button onclick="showTab('t-compra',this)">🏠 Opción Compra</button>
+    <button onclick="showTab('t-alquiler',this)">📈 Opción Alquiler</button>
+    <button onclick="showTab('t-hipoteca',this)">Hipoteca año a año</button>
+    <button onclick="showTab('t-evolucion',this)">Evolución comparada</button>
+  </div>
+
+  <!-- RESUMEN -->
+  <div class="tab-body on" id="t-resumen">
+    <div class="section">
+      <div class="section-hd">KPIs principales <span>ambas opciones · horizonte ${anos} años</span></div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kl">Precio compra</div><div class="kv a">${fmt(precio)}</div><div class="ks">${tipo==='segunda'?'2ª mano':'Vivienda nueva'}</div></div>
+        <div class="kpi"><div class="kl">Entrada pagada</div><div class="kv r">${fmt(entrada)}</div><div class="ks">${pct(gid('entrada').value)} del precio</div></div>
+        <div class="kpi"><div class="kl">Capital hipotecado</div><div class="kv">${fmt(capital)}</div><div class="ks">${pct(gid('interes').value)} TAE · ${gid('plazo').value}a</div></div>
+        <div class="kpi"><div class="kl">Cuota mensual</div><div class="kv">${fmt(cuotaMes)}</div><div class="ks">${fmt(cuotaA)}/año</div></div>
+        <div class="kpi"><div class="kl">Gastos de compra</div><div class="kv r">${fmt(gastosCompra)}</div><div class="ks">Impuestos + notaría + registro</div></div>
+        <div class="kpi"><div class="kl">Valor casa año ${anos}</div><div class="kv g">${fmt(rowN.valorCasa)}</div><div class="ks">${pct(gid('reval').value)}/año · +${fmt(pventa-precio)}</div></div>
+        <div class="kpi"><div class="kl">Intereses pagados (${anos}a)</div><div class="kv r">${fmt(totalInt)}</div><div class="ks">De ${fmt(totalIntHip)} vida hipoteca</div></div>
+        <div class="kpi"><div class="kl">Deuda restante año ${anos}</div><div class="kv ${rowN.saldo>0?'r':''}">${fmt(rowN.saldo)}</div><div class="ks">${rowN.saldo===0?'✓ Hipoteca cancelada':'Pendiente al vender'}</div></div>
+        <div class="kpi"><div class="kl">Alquiler total pagado</div><div class="kv r">${fmt(totalAlq)}</div><div class="ks">${anos} años</div></div>
+        <div class="kpi"><div class="kl">Cartera bruta año ${anos}</div><div class="kv g">${fmt(rowN.cartera)}</div><div class="ks">${pct(gid('bolsa').value)}/año compuesto</div></div>
+        <div class="kpi"><div class="kl">IRPF plusvalía bolsa</div><div class="kv r">${fmt(irpfBolsa)}</div><div class="ks">Ganancias: ${fmt(gananciasBolsa)}</div></div>
+        <div class="kpi"><div class="kl">Patrimonio neto compra</div><div class="kv ${patriC>0?'g':'r'}">${fmt(patriC)}</div><div class="ks">Tras todos los gastos</div></div>
+        <div class="kpi"><div class="kl">IRPF venta bolsa</div><div class="kv r">${fmt(irpfBolsa)}</div><div class="ks">Sobre ${fmt(gananciasBolsa)} de ganancias</div></div>
+        <div class="kpi"><div class="kl">Cartera neta bolsa</div><div class="kv g">${fmt(patriA)}</div><div class="ks">Tras IRPF plusvalía</div></div>
+        <div class="kpi"><div class="kl">Ventaja ${ganador}</div><div class="kv ${diff>0?'g':'r'}">${fmt(Math.abs(diff))}</div><div class="ks">Diferencia neta año ${anos}</div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-hd">Resumen en cascada <span>flujos totales de cada opción · año ${anos}</span></div>
+      <div class="waterfall-wrap"><svg id="wfResumen" class="wf-svg" height="200"></svg></div>
+      <p class="footnote">• Verde = entradas de valor · Rojo = salidas de valor · Dorado = resultado neto final. Las barras muestran el impacto acumulado de cada concepto sobre el patrimonio final.</p>
+    </div>
+    <div class="section">
+      <div class="section-hd">Comparativa visual <span>patrimonio neto · años 1 a ${anos}</span></div>
+      <div class="chart-box"><canvas id="chartMain"></canvas></div>
+      <p class="footnote">• Compra (dorado): precio venta − deuda pendiente − IRPF ganancia patrimonial − Plusvalía Municipal − comisión agencia. • Bolsa (verde): cartera acumulada <strong>neta de IRPF</strong> (escala 19–28% sobre plusvalías, calculada como si se liquidara toda la inversión ese año). Ambas cifras son comparables neto de impuestos.</p>
+    </div>
+  </div>
+
+  <!-- OPCIÓN COMPRA -->
+  <div class="tab-body" id="t-compra">
+
+    <div class="section">
+      <div class="section-hd">Cascada de valor — Opción Compra <span>resumen total · año ${anos}</span></div>
+      <div class="waterfall-wrap"><svg id="wfCompra" class="wf-svg" height="220"></svg></div>
+      <p class="footnote">Cada barra muestra el impacto neto de ese concepto sobre el patrimonio final. Verde = suma valor · Rojo = resta valor · Dorado = resultado neto.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-hd">Impuestos y gastos en la COMPRA <span>${tipo==='segunda'?'2ª Mano':'Vivienda Nueva'} · Madrid 2025</span></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Concepto</th><th>Base imponible</th><th class="ra">Tipo</th><th class="ra">Importe</th></tr></thead>
+        <tbody>
+          ${tipo==='segunda'?`
+          <tr>
+            <td>
+              <span class="cm">ITP — Impuesto Transmisiones Patrimoniales</span><span class="tag">Comunidad de Madrid</span>
+              <span class="note">Tipo general vigente en Madrid: 6% (Decreto Legislativo 1/2010). Se aplica sobre el precio escriturado.</span>
+              <span class="note">Bonificaciones: 4% para menores de 35 años (renta ≤24.107€ · patrimonio ≤175.000€) · familias numerosas · discapacidad ≥65%.</span>
+              <span class="note">En 2ª mano NO se paga IVA. El comprador siempre paga el ITP.</span>
+            </td>
+            <td class="cm">${fmt(precio)}</td>
+            <td class="ra">${pct(itpTipo*100)}</td>
+            <td class="ra cr">${fmt(itp)}</td>
+          </tr>`:``}
+          ${tipo==='nueva'?`
+          <tr>
+            <td>
+              <span class="cm">IVA — Vivienda Nueva</span><span class="tag">Estatal</span>
+              <span class="note">Tipo reducido del 10% para vivienda libre (art. 91 Ley IVA). Tipo superreducido 4% para VPO de régimen especial.</span>
+              <span class="note">En vivienda nueva el promotor repercute el IVA al comprador. Incompatible con ITP (se aplica uno u otro).</span>
+            </td>
+            <td class="cm">${fmt(precio)}</td>
+            <td class="ra">${pct(ivaTipo*100)}</td>
+            <td class="ra cr">${fmt(iva)}</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="cm">AJD — Actos Jurídicos Documentados</span><span class="tag">Comunidad de Madrid</span>
+              <span class="note">Grava el documento notarial en operaciones sujetas a IVA. Tipo general Madrid: 0,75% (art. 27 DLeg. 1/2010).</span>
+              <span class="note">Tipo 0% para jóvenes ≤35a, familias numerosas y discapacitados. Desde Ley 5/2019 el banco paga el AJD de la hipoteca.</span>
+            </td>
+            <td class="cm">${fmt(precio)}</td>
+            <td class="ra">${pct(ajdTipo*100)}</td>
+            <td class="ra cr">${fmt(ajd)}</td>
+          </tr>`:``}
+          <tr>
+            <td>
+              <span class="cm">Notaría (escritura compraventa + hipoteca)</span><span class="tag a">Estimado</span>
+              <span class="note">Aranceles notariales (RD 1426/1989). Incluye dos escrituras: compraventa e hipoteca. Escala decreciente sobre el valor.</span>
+              <span class="note">Desde Ley 5/2019: el banco asume los costes notariales de la hipoteca (escritura hipotecaria). El comprador sigue pagando la de compraventa.</span>
+            </td>
+            <td class="cm">—</td>
+            <td class="ra cd">~0,15%</td>
+            <td class="ra cr">${fmt(notaria)}</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="cm">Registro de la Propiedad</span><span class="tag a">Estimado</span>
+              <span class="note">Inscripción de escritura de compraventa y carga hipotecaria. Aranceles RD 1427/1989. Escala decreciente.</span>
+            </td>
+            <td class="cm">—</td>
+            <td class="ra cd">~0,10%</td>
+            <td class="ra cr">${fmt(registro)}</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="cm">Gestoría</span><span class="tag a">Estimado</span>
+              <span class="note">Tramitación y liquidación ante Hacienda (autoliquidación ITP/AJD), presentación en Registro. Tarifa estándar mercado Madrid.</span>
+            </td>
+            <td class="cm">—</td>
+            <td class="ra cd">—</td>
+            <td class="ra cr">${fmt(gestoria)}</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="cm">Tasación del inmueble</span><span class="tag a">Estimado</span>
+              <span class="note">Informe de valoración homologado por tasador certificado. Obligatorio para conceder hipoteca (art. 6 Ley 5/2019). Lo paga el comprador.</span>
+            </td>
+            <td class="cm">—</td>
+            <td class="ra cd">—</td>
+            <td class="ra cr">${fmt(tasacion)}</td>
+          </tr>
+          <tr class="total">
+            <td colspan="3" class="ca"><strong>TOTAL GASTOS DE COMPRA</strong><span class="note">Desembolso inicial total (entrada + gastos): ${fmt(invInicial)}</span></td>
+            <td class="ra cr"><strong>${fmt(gastosCompra)}</strong></td>
+          </tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="section">
+      <div class="section-hd">Gastos anuales de propiedad <span>recurrentes mientras seas propietario</span></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Concepto</th><th>Cálculo aplicado</th><th class="ra">Importe/año</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="cm">IBI — Impuesto sobre Bienes Inmuebles</span><span class="tag">Ayuntamiento de Madrid</span>
+              <span class="note">Tipo medio Madrid capital: ~0,40% sobre valor catastral. El valor catastral suele ser inferior al precio de mercado (60-70%). Se aplica sobre el precio como referencia.</span>
+              <span class="note">Se puede reclamar reducción si el valor catastral está desactualizado o es superior al de mercado.</span>
+            </td>
+            <td class="cd">Input editable · base: precio × 0,40%</td>
+            <td class="ra cr">${fmt(ibiA)}</td>
+          </tr>
+          <tr>
+            <td><span class="cm">Cuota comunidad de propietarios</span><span class="tag a">Estimado</span>
+              <span class="note">Variable según edificio: portero, ascensor, piscina, calefacción central, etc. Media Madrid para piso estándar.</span>
+            </td>
+            <td class="cd">Input editable · base: ${fmt((precio>400000?220:160))}/mes</td>
+            <td class="ra cr">${fmt(comunA)}</td>
+          </tr>
+          <tr>
+            <td><span class="cm">Seguro multirriesgo del hogar</span><span class="tag a">Estimado</span>
+              <span class="note">Obligatorio para mantener la hipoteca vigente (art. 11 Ley 5/2019 reguladora de contratos de crédito inmobiliario). Prima media ~0,1% del valor.</span>
+            </td>
+            <td class="cd">Input editable · base: precio × 0,10-0,12%</td>
+            <td class="ra cr">${fmt(seguroA)}</td>
+          </tr>
+          <tr>
+            <td><span class="cm">Mantenimiento y reparaciones</span><span class="tag a">Estimado</span>
+              <span class="note">Regla empírica conservadora: 0,5–1% anual del valor del inmueble. Incluye fontanería, electricidad, pintura, electrodomésticos, cerrajería, etc.</span>
+              <span class="note">No incluye reformas estructurales ni mejoras de capital que incrementen el valor.</span>
+            </td>
+            <td class="cd">Input editable · base: 0,5% nueva / 1% 2ª mano</td>
+            <td class="ra cr">${fmt(mantA)}</td>
+          </tr>
+          <tr class="total">
+            <td colspan="2" class="ca"><strong>TOTAL GASTOS ANUALES DE PROPIEDAD</strong><span class="note">Durante ${anos} años: ${fmt(gastAnuA*anos)}</span></td>
+            <td class="ra cr"><strong>${fmt(gastAnuA)}</strong></td>
+          </tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="section">
+      <div class="section-hd">Impuestos y gastos en la VENTA <span>año ${anos} · precio estimado ${fmt(pventa)}</span></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Concepto</th><th>Base</th><th class="ra">Tipo</th><th class="ra">Importe</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="cm">IRPF — Ganancia Patrimonial</span><span class="tag">Estatal · Base del ahorro</span>
+              <span class="note">Diferencia entre precio de transmisión (${fmt(pventa)}) y precio de adquisición (${fmt(precio)}) = <strong>${fmt(Math.max(0,ganP))}</strong> de ganancia bruta.</span>
+              <span class="note">Escala ahorro LIRPF art. 66 (vigente 2025): 19% sobre los primeros 6.000€ · 21% de 6.000 a 50.000€ · 23% de 50.000 a 200.000€ · 26% de 200.000 a 300.000€ · 28% sobre el exceso de 300.000€.</span>
+              <span class="note">Exención por reinversión en vivienda habitual (art. 38 LIRPF) si reinviertes el importe en 2 años en otra vivienda habitual. Mayores de 65 años: exentos si transmiten su vivienda habitual.</span>
+              ${ganP<=0?'<span class="note" style="color:var(--green)">✓ No tributa: no hay ganancia patrimonial (precio venta ≤ precio compra).</span>':''}
+            </td>
+            <td class="cm">${fmt(Math.max(0,ganP))}</td>
+            <td class="ra">Progresiva</td>
+            <td class="ra cr">${fmt(irpfV)}</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="cm">Plusvalía Municipal (IIVTNU)</span><span class="tag">Ayuntamiento de Madrid</span>
+              <span class="note">Impuesto sobre el Incremento de Valor de los Terrenos de Naturaleza Urbana. Lo paga el vendedor (salvo pacto en contrario).</span>
+              <span class="note">Método objetivo: valor catastral suelo (estimado 60% precio) × coeficiente según años de tenencia (máx. 45%) × tipo impositivo Madrid 29%.</span>
+              <span class="note">Base estimada: ${fmt(pvBase)} · STS 26/10/2021: si la transmisión no genera incremento real, no tributa (método real si es más favorable).</span>
+            </td>
+            <td class="cm">${fmt(pvBase)}</td>
+            <td class="ra">29%</td>
+            <td class="ra cr">${fmt(pvMun)}</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="cm">Comisión agencia inmobiliaria</span><span class="tag a">Estimado</span>
+              <span class="note">Tarifa habitual en Madrid: 3–5% del precio de venta. No es un impuesto. Es un gasto deducible del IRPF (reduce la base imponible de la ganancia patrimonial).</span>
+              <span class="note">Aquí se calcula sobre el precio de venta para simplificar, aunque fiscalmente se deduce de la ganancia antes de aplicar la escala IRPF.</span>
+            </td>
+            <td class="cm">${fmt(pventa)}</td>
+            <td class="ra">3%</td>
+            <td class="ra cr">${fmt(comV)}</td>
+          </tr>
+          <tr class="total">
+            <td colspan="3" class="ca">
+              <strong>TOTAL GASTOS DE VENTA</strong>
+              <span class="note">Patrimonio neto final: ${fmt(pventa)} (venta) − ${fmt(rowN.saldo)} (deuda) − ${fmt(gastVenta)} (gastos venta) = <strong style="color:${patriC>0?'var(--green)':'var(--red)'}">${fmt(patriC)}</strong></span>
+            </td>
+            <td class="ra cr"><strong>${fmt(gastVenta)}</strong></td>
+          </tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="section">
+      <div class="section-hd">Resumen financiero completo — Opción Compra</div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+        <div class="kpi"><div class="kl">Desembolso inicial</div><div class="kv r">${fmt(invInicial)}</div><div class="ks">Entrada + gastos compra</div></div>
+        <div class="kpi"><div class="kl">Total cuotas pagadas</div><div class="kv r">${fmt(Math.min(anos,plazoA)*cuotaA)}</div><div class="ks">${Math.min(anos,plazoA)} años × ${fmt(cuotaA)}/año</div></div>
+        <div class="kpi"><div class="kl">De los que: intereses</div><div class="kv r">${fmt(totalInt)}</div><div class="ks">Coste financiero real pagado</div></div>
+        <div class="kpi"><div class="kl">De los que: amortización</div><div class="kv b">${fmt(capital-rowN.saldo)}</div><div class="ks">Capital devuelto al banco</div></div>
+        <div class="kpi"><div class="kl">Gastos anuales (${anos}a)</div><div class="kv r">${fmt(gastAnuA*anos)}</div><div class="ks">IBI + comunidad + seguro + mant.</div></div>
+        <div class="kpi"><div class="kl">Gastos compra</div><div class="kv r">${fmt(gastosCompra)}</div><div class="ks">Impuestos + registro + gestoría</div></div>
+        <div class="kpi"><div class="kl">Precio venta año ${anos}</div><div class="kv g">${fmt(pventa)}</div><div class="ks">+${fmt(pventa-precio)} de plusvalía</div></div>
+        <div class="kpi"><div class="kl">Gastos de venta</div><div class="kv r">${fmt(gastVenta)}</div><div class="ks">IRPF + plusvalía mun. + comisión</div></div>
+        <div class="kpi"><div class="kl">Deuda restante</div><div class="kv ${rowN.saldo>0?'r':''}">${fmt(rowN.saldo)}</div><div class="ks">${rowN.saldo===0?'Hipoteca cancelada':'Pendiente al vender'}</div></div>
+        <div class="kpi"><div class="kl">PATRIMONIO NETO</div><div class="kv ${patriC>0?'g':'r'}">${fmt(patriC)}</div><div class="ks">Lo que te queda en el bolsillo</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPCIÓN ALQUILER -->
+  <div class="tab-body" id="t-alquiler">
+    <div class="section">
+      <div class="section-hd">Cascada de valor — Opción Alquiler + Bolsa <span>resumen total · año ${anos}</span></div>
+      <div class="waterfall-wrap"><svg id="wfAlquiler" class="wf-svg" height="220"></svg></div>
+      <p class="footnote">Cada barra muestra el impacto neto de ese concepto sobre el patrimonio final. Verde = suma valor · Rojo = resta valor · Dorado = resultado neto.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-hd">Estrategia — Opción Alquiler + Inversión</div>
+      <div class="alert-box alert-blue">
+        En lugar de inmovilizar <strong>${fmt(invInicial)}</strong> en la entrada + gastos, el inquilino invierte ese capital en bolsa al <strong>${pct(gid('bolsa').value)}/año</strong> (ej. MSCI World o S&amp;P 500, rentabilidad histórica ~7–10% nominal).<br>
+        Si la cuota hipotecaria + gastos de propiedad superan el alquiler mensual, el inquilino invierte también ese ahorro anual adicional.<br>
+        Al final del horizonte temporal, la cartera se vende y se pagan impuestos sobre las plusvalías generadas (misma escala del ahorro que inmuebles: 19–28%). <strong>Esta calculadora sí incluye este IRPF</strong> en el patrimonio neto final del inquilino. Tampoco considera el impacto de la movilidad geográfica ni el valor emocional de la propiedad.
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-hd">IRPF sobre la venta de la cartera bursátil <span>al año ${anos} · escala base del ahorro</span></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Concepto</th><th>Base / Cálculo</th><th class="ra">Tipo</th><th class="ra">Importe</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="cm">Capital total aportado</span><span class="tag g">No tributa</span>
+              <span class="note">Inversión inicial (${fmt(invInicial)}) más todos los ahorros anuales invertidos. Esta parte recuperas sin pagar impuestos.</span>
+            </td>
+            <td class="cm">${fmt(totalAportado)}</td>
+            <td class="ra cd">—</td>
+            <td class="ra cg">0 €</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="cm">Plusvalía bursátil (ganancia)</span><span class="tag">Estatal · Base del ahorro</span>
+              <span class="note">Cartera bruta ${fmt(rowN.cartera)} − Capital aportado ${fmt(totalAportado)} = <strong>${fmt(gananciasBolsa)}</strong> de ganancia.</span>
+              <span class="note">Escala IRPF base ahorro (art. 66 LIRPF 2025): 19% (0–6.000€) · 21% (6.000–50.000€) · 23% (50.000–200.000€) · 26% (200.000–300.000€) · 28% (+300.000€).</span>
+              <span class="note">Misma escala que la ganancia patrimonial por venta de inmueble. Si mantienes en fondos de inversión puedes diferir el pago traspasando (régimen de traspasos art. 94 LIRPF).</span>
+            </td>
+            <td class="cm">${fmt(gananciasBolsa)}</td>
+            <td class="ra">Progresiva</td>
+            <td class="ra cr">${fmt(irpfBolsa)}</td>
+          </tr>
+          <tr class="total">
+            <td colspan="3" class="ca">
+              <strong>PATRIMONIO NETO BOLSA TRAS IMPUESTOS</strong>
+              <span class="note">Cartera bruta ${fmt(rowN.cartera)} − IRPF ${fmt(irpfBolsa)} = <strong style="color:var(--green)">${fmt(patriA)}</strong></span>
+            </td>
+            <td class="ra cr"><strong>${fmt(irpfBolsa)}</strong></td>
+          </tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="section">
+      <div class="section-hd">Cashflow año a año — Inquilino</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr>
+          <th>Año</th>
+          <th class="ra">Alquiler/año</th>
+          <th class="ra">Coste prop. equiv.</th>
+          <th class="ra">Ahorro vs compra</th>
+          <th class="ra">Aportación bolsa</th>
+          <th class="ra">Cartera acumulada</th>
+          <th class="ra">Rentab. año</th>
+        </tr></thead>
+        <tbody>
+          ${(()=>{
+            let carteraAnt = invInicial;
+            return rows.filter(r=>r.y<=anos).map((r,i)=>{
+              const ahorro = Math.max(0, r.costeProp - r.alqAnual);
+              const aport = i===0 ? invInicial+ahorro : ahorro;
+              const rentY = r.cartera - carteraAnt - (i===0?invInicial:0) - ahorro;
+              const ret = carteraAnt>0?(r.cartera-carteraAnt-ahorro)/carteraAnt*100:0;
+              carteraAnt = r.cartera;
+              return `<tr>
+                <td class="cm">Año ${r.y}</td>
+                <td class="ra cr">${fmt(r.alqAnual)}</td>
+                <td class="ra cd">${fmt(r.costeProp)}</td>
+                <td class="ra ${ahorro>0?'cg':'cd'}">${ahorro>0?'+':''} ${fmt(ahorro)}</td>
+                <td class="ra cb">${fmt(aport)}</td>
+                <td class="ra cg">${fmt(r.cartera)}</td>
+                <td class="ra cg">+${fmt(rentY)}</td>
+              </tr>`;
+            }).join('');
+          })()}
+        </tbody>
+      </table></div>
+      <p class="footnote">• "Coste prop. equiv." = cuota hipoteca + IBI + comunidad + seguro + mantenimiento que pagaría el propietario ese año. • "Ahorro vs compra" = diferencia que el inquilino puede invertir adicionalmente. • Año 1 incluye el capital inicial de ${fmt(invInicial)}. • "Rentab. año" = rentabilidad generada por la cartera existente (excluye nuevas aportaciones).</p>
+    </div>
+    <div class="section">
+      <div class="section-hd">Resumen financiero — Opción Alquiler</div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+        <div class="kpi"><div class="kl">Capital inicial invertido</div><div class="kv a">${fmt(invInicial)}</div><div class="ks">Equivale a entrada + gastos compra</div></div>
+        <div class="kpi"><div class="kl">Total alquiler pagado</div><div class="kv r">${fmt(totalAlq)}</div><div class="ks">${anos} años pagando</div></div>
+        <div class="kpi"><div class="kl">Alquiler inicial</div><div class="kv">${fmt(+gid('alquiler').value)}/mes</div><div class="ks">Incremento ${pct(gid('inc-alq').value)}/año</div></div>
+        <div class="kpi"><div class="kl">Alquiler mes año ${anos}</div><div class="kv">${fmt(rows[anos-1].alqAnual/12)}/mes</div><div class="ks">Tras ${anos} años de incrementos</div></div>
+        <div class="kpi"><div class="kl">Rentabilidad bolsa</div><div class="kv g">${pct(gid('bolsa').value)}</div><div class="ks">Anual compuesta</div></div>
+        <div class="kpi"><div class="kl">Cartera bruta año ${anos}</div><div class="kv g">${fmt(rowN.cartera)}</div><div class="ks">Antes de impuestos venta</div></div>
+        <div class="kpi"><div class="kl">Capital total aportado</div><div class="kv b">${fmt(totalAportado)}</div><div class="ks">Inversión inicial + ahorros anuales</div></div>
+        <div class="kpi"><div class="kl">Ganancias bursátiles</div><div class="kv g">${fmt(gananciasBolsa)}</div><div class="ks">Base IRPF</div></div>
+        <div class="kpi"><div class="kl">IRPF plusvalía bolsa</div><div class="kv r">${fmt(irpfBolsa)}</div><div class="ks">Escala ahorro 19–28%</div></div>
+        <div class="kpi"><div class="kl">CARTERA NETA AÑO ${anos}</div><div class="kv g">${fmt(patriA)}</div><div class="ks">Patrimonio neto tras impuestos</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HIPOTECA AÑO A AÑO -->
+  <div class="tab-body" id="t-hipoteca">
+    <div class="section">
+      <div class="section-hd">Resumen de la hipoteca</div>
+      <div class="mort-banner">
+        <div class="mort-cell"><div class="ml">Capital hipotecado</div><div class="mv">${fmt(capital)}</div></div>
+        <div class="mort-cell"><div class="ml">Cuota mensual fija</div><div class="mv">${fmt(cuotaMes)}</div></div>
+        <div class="mort-cell"><div class="ml">Plazo total</div><div class="mv">${plazoA} años</div></div>
+        <div class="mort-cell"><div class="ml">Tipo de interés (TAE)</div><div class="mv ca">${pct(gid('interes').value)}</div></div>
+        <div class="mort-cell"><div class="ml">Total intereses (vida completa)</div><div class="mv cr">${fmt(totalIntHip)}</div></div>
+        <div class="mort-cell"><div class="ml">Total desembolsado</div><div class="mv cr">${fmt(totalHip)}</div></div>
+      </div>
+      ${anos<=plazoA?
+        `<div class="alert-box alert-gold">⚠ Vendes en el año ${anos}, con <strong>${fmt(rowN.saldo)}</strong> de deuda aún pendiente. Habrás pagado <strong>${fmt(totalInt)}</strong> en intereses, de un total de <strong>${fmt(totalIntHip)}</strong> que pagarías en los ${plazoA} años completos. Te quedan <strong>${fmt(totalIntHip-totalInt)}</strong> de intereses por pagar (que te ahorras al vender).</div>`:
+        `<div class="alert-box alert-green">✓ La hipoteca quedó completamente cancelada en el año ${plazoA}. Has pagado <strong>${fmt(totalIntHip)}</strong> en intereses a lo largo de los ${plazoA} años.</div>`
+      }
+    </div>
+    <div class="section">
+      <div class="section-hd">Cuadro de amortización año a año <span>sistema francés · cuota constante · barra = composición</span></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr>
+          <th>Año</th>
+          <th class="ra">Cuota anual</th>
+          <th class="ra">Intereses</th>
+          <th class="ra">Amortización</th>
+          <th class="ra">% Interés</th>
+          <th>Composición cuota</th>
+          <th class="ra">Deuda pendiente</th>
+          <th class="ra">Intereses acumulados</th>
+        </tr></thead>
+        <tbody>
+          ${(()=>{
+            let acumInt=0;
+            return rows.filter(r=>r.y<=plazoA).map(r=>{
+              acumInt+=r.intA;
+              const pctInt=cuotaA>0?r.intA/cuotaA:0;
+              const isHoy=r.y===anos;
+              const isPast=r.y>anos;
+              return `<tr style="${isHoy?'background:rgba(201,168,76,0.06);outline:1px solid rgba(201,168,76,0.25);':isPast?'opacity:0.55;':''}">
+                <td class="${isHoy?'ca':isPast?'cd':'cm'}">${isHoy?'▶ ':isPast?'· ':''}Año ${r.y}</td>
+                <td class="ra">${fmt(cuotaA)}</td>
+                <td class="ra cr">${fmt(r.intA)}</td>
+                <td class="ra cg">${fmt(r.amortiA)}</td>
+                <td class="ra cd">${pct(pctInt*100)}</td>
+                <td>
+                  <div class="amort-bar">
+                    <div class="amort-int" style="width:${(pctInt*100).toFixed(1)}%"></div>
+                    <div class="amort-cap" style="width:${((1-pctInt)*100).toFixed(1)}%"></div>
+                  </div>
+                </td>
+                <td class="ra ${r.saldo>0?'':'cg'}">${fmt(r.saldo)}</td>
+                <td class="ra cr">${fmt(acumInt)}</td>
+              </tr>`;
+            }).join('');
+          })()}
+        </tbody>
+      </table></div>
+      <p class="footnote">• Fila dorada ▶ = año de venta seleccionado. • Barra roja = proporción de cada cuota que va a intereses · barra verde = proporción que amortiza capital. • En el sistema francés (cuota constante), los primeros años casi todo son intereses; con el tiempo la amortización cobra más peso. • Intereses acumulados: total pagado en concepto de intereses desde el inicio hasta ese año.</p>
+    </div>
+  </div>
+
+  <!-- EVOLUCIÓN COMPARADA -->
+  <div class="tab-body" id="t-evolucion">
+    <div class="section">
+      <div class="section-hd">Gráfico de evolución <span>patrimonio neto año a año</span></div>
+      <div class="chart-box" style="height:320px"><canvas id="chartEv"></canvas></div>
+    </div>
+    <div class="section">
+      <div class="section-hd">Tabla comparativa anual completa <span>50 años · horizonte marcado en ▶</span></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr>
+          <th>Año</th>
+          <th class="ra">Valor casa</th>
+          <th class="ra">Deuda</th>
+          <th class="ra">Intereses año</th>
+          <th class="ra">Inter. acum.</th>
+          <th class="ra">IRPF venta</th>
+          <th class="ra">Plusvalía mun.</th>
+          <th class="ra">Comisión</th>
+          <th class="ra">Patrim. Compra</th>
+          <th class="ra">Alquiler/año</th>
+          <th class="ra">Cartera bruta</th>
+          <th class="ra">IRPF bolsa*</th>
+          <th class="ra">Cartera neta</th>
+          <th class="ra">Diferencia</th>
+        </tr></thead>
+        <tbody>
+          ${(()=>{
+            let acumI=0;
+            return rows.filter(r=>r.y<=50).map(r=>{
+              acumI+=r.intA;
+              const gp=r.valorCasa-precio;
+              const irpfY=calcIRPF(Math.max(0,gp));
+              const pvY=precio*0.6*Math.min(0.03*r.y,0.45)*0.29;
+              const comY=r.valorCasa*0.03;
+              const gvY=irpfY+pvY+comY;
+              const netY=r.valorCasa-r.saldo-gvY;
+              // IRPF bolsa hipotético si vendiera ese año
+              const ganBolsaY=Math.max(0,r.cartera-totalAportado);
+              const irpfBolsaY=calcIRPF(ganBolsaY);
+              const carteraNeta=r.cartera-irpfBolsaY;
+              const df=netY-carteraNeta;
+              const isHoy=r.y===anos;
+              return `<tr style="${isHoy?'background:rgba(201,168,76,0.06);outline:1px solid rgba(201,168,76,0.25);':''}">
+                <td class="${isHoy?'ca':'cm'}">${isHoy?'▶ ':''}Año ${r.y}</td>
+                <td class="ra">${fmt(r.valorCasa)}</td>
+                <td class="ra cd">${fmt(r.saldo)}</td>
+                <td class="ra cr">${fmt(r.intA)}</td>
+                <td class="ra cr">${fmt(acumI)}</td>
+                <td class="ra cr">${fmt(irpfY)}</td>
+                <td class="ra cr">${fmt(pvY)}</td>
+                <td class="ra cr">${fmt(comY)}</td>
+                <td class="ra ${netY>0?'cg':'cr'}">${fmt(netY)}</td>
+                <td class="ra cr">${fmt(r.alqAnual)}</td>
+                <td class="ra cg">${fmt(r.cartera)}</td>
+                <td class="ra cr">${fmt(irpfBolsaY)}</td>
+                <td class="ra cg">${fmt(carteraNeta)}</td>
+                <td class="ra ${df>0?'cg':'cr'}">${df>0?'+':''}${fmt(df)}</td>
+              </tr>`;
+            }).join('');
+          })()}
+        </tbody>
+      </table></div>
+      <p class="footnote">• Patrimonio Compra = Valor venta − deuda pendiente − IRPF ganancia patrimonial − Plusvalía Municipal (tipo 29% Madrid) − comisión agencia (3%). Los gastos iniciales de compra ya se desembolsaron y no restan aquí. • La tabla muestra 50 años de evolución. La fila ▶ dorada marca el horizonte temporal del ejercicio (año ${anos}). Las filas en gris tenue son proyecciones más allá del horizonte. • Diferencia = Compra − Bolsa neta: verde si la compra genera más patrimonio. • (*) IRPF bolsa calculado como si se liquidara toda la cartera ese año.</p>
+    </div>
+  </div>
+  `;
+
+  // Store render params globally so tabs can redraw on show
+  window._chartParams = {
+    rows, anos, precio, invInicial, totalAportado,
+    entrada, gastosCompra, pventa, deudaRestante: rowN.saldo,
+    irpfV, pvMun, comV, totalInt, gastAnuA,
+    rowNCartera: rowN.cartera, irpfBolsa, gananciasBolsa, totalAlq,
+    patriC, patriA
+  };
+  window._renderCharts = function() {
+    const p = window._chartParams;
+    if (!p) return;
+    drawChart('chartMain', p.rows, p.anos, p.precio, p.invInicial, p.totalAportado, false);
+    drawChart50('chartEv', p.rows, p.anos, p.precio, p.invInicial, p.totalAportado);
+    drawWaterfall('wfCompra', buildWaterfallCompra(
+      p.precio, p.entrada, p.gastosCompra, p.pventa, p.deudaRestante,
+      p.irpfV, p.pvMun, p.comV, p.totalInt, p.gastAnuA*p.anos
+    ));
+    drawWaterfall('wfAlquiler', buildWaterfallAlquiler(
+      p.invInicial, p.totalAportado, p.rowNCartera, p.irpfBolsa, p.gananciasBolsa, p.totalAlq
+    ));
+    drawWaterfall('wfResumen', buildWaterfallResumen(
+      p.precio, p.entrada, p.gastosCompra, p.pventa, p.deudaRestante,
+      p.irpfV, p.pvMun, p.comV, p.totalInt, p.gastAnuA*p.anos,
+      p.invInicial, p.rowNCartera, p.irpfBolsa, p.totalAlq, p.patriC, p.patriA
+    ));
+  };
+  setTimeout(() => window._renderCharts(), 80);
+}
+
+function drawChart(id, rows, anos, precio, invInicial, totalAportado, allYears) {
+  const canvas = gid(id); if (!canvas) return;
+  const W = Math.max(canvas.parentElement.clientWidth || 700, 300) - 28;
+  const H = Math.max(canvas.parentElement.clientHeight || 250, 200) - 28;
+  canvas.width=W; canvas.height=H;
+  const ctx = canvas.getContext('2d');
+
+  const dr = rows.filter(r=>r.y<=anos);
+  const dataCasa = dr.map(r=>{
+    const gp=r.valorCasa-precio;
+    const irpfY=calcIRPF(Math.max(0,gp));
+    const pvY=precio*0.6*Math.min(0.03*r.y,0.45)*0.29;
+    const comY=r.valorCasa*0.03;
+    return Math.round(r.valorCasa-r.saldo-irpfY-pvY-comY);
+  });
+  const dataBolsa = dr.map(r=>{
+    const ganBY=Math.max(0,r.cartera-totalAportado);
+    return Math.round(r.cartera-calcIRPF(ganBY));
+  });
+
+  const all=[...dataCasa,...dataBolsa];
+  const minV=Math.min(0,...all), maxV=Math.max(...all);
+  const pad={t:26,r:22,b:34,l:80};
+  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+  const n=dr.length;
+  const toX=i=>pad.l+(n<=1?cw/2:i/(n-1)*cw);
+  const toY=v=>pad.t+ch-((v-minV)/(maxV-minV||1))*ch;
+
+  ctx.strokeStyle='#272b36'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+ch/4*i;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    const val=maxV-(maxV-minV)*i/4;
+    ctx.fillStyle='#454a5e'; ctx.font='10px IBM Plex Mono'; ctx.textAlign='right';
+    ctx.fillText((val>=1000?(val/1000).toFixed(0)+'k':val.toFixed(0)), pad.l-8, y+3);
+  }
+  if(minV<0){
+    const zy=toY(0);
+    ctx.strokeStyle='#454a5e'; ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(pad.l,zy); ctx.lineTo(W-pad.r,zy); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  const fillArea=(data,color)=>{
+    ctx.beginPath();
+    data.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+    ctx.lineTo(toX(data.length-1),toY(minV<0?0:minV));
+    ctx.lineTo(toX(0),toY(minV<0?0:minV));
+    ctx.closePath(); ctx.fillStyle=color; ctx.fill();
+  };
+  fillArea(dataCasa,'rgba(201,168,76,0.07)');
+  fillArea(dataBolsa,'rgba(76,201,142,0.07)');
+
+  const drawLine=(data,color)=>{
+    ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.lineJoin='round';
+    data.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+    ctx.stroke();
+  };
+  drawLine(dataBolsa,'#4cc98e');
+  drawLine(dataCasa,'#c9a84c');
+
+  const si=anos-1;
+  if(si<dr.length){
+    [[dataCasa,'#c9a84c'],[dataBolsa,'#4cc98e']].forEach(([d,c])=>{
+      ctx.beginPath(); ctx.arc(toX(si),toY(d[si]),5,0,Math.PI*2);
+      ctx.fillStyle=c; ctx.fill();
+      ctx.strokeStyle='#0b0c0f'; ctx.lineWidth=2; ctx.stroke();
+    });
+    // Value labels at selected year
+    ctx.fillStyle='#c9a84c'; ctx.font='bold 10px IBM Plex Mono'; ctx.textAlign='center';
+    ctx.fillText(fmt(dataCasa[si]), toX(si), toY(dataCasa[si])-10);
+    ctx.fillStyle='#4cc98e';
+    ctx.fillText(fmt(dataBolsa[si]), toX(si), toY(dataBolsa[si])+(dataBolsa[si]<dataCasa[si]?-10:15));
+  }
+
+  ctx.fillStyle='#454a5e'; ctx.font='9px IBM Plex Mono'; ctx.textAlign='center';
+  dr.forEach((r,i)=>{
+    if(r.y===1||r.y%5===0||r.y===anos){
+      ctx.fillStyle=r.y===anos?'#c9a84c':'#454a5e';
+      ctx.fillText('Año '+r.y, toX(i), H-8);
+    }
+  });
+
+  [['Compra (pat. neto)','#c9a84c'],['Alquiler + Bolsa','#4cc98e']].forEach(([label,color],li)=>{
+    const lx=pad.l+li*170;
+    ctx.fillStyle=color; ctx.fillRect(lx,7,18,3);
+    ctx.fillStyle='#7a8099'; ctx.font='9px IBM Plex Mono'; ctx.textAlign='left';
+    ctx.fillText(label, lx+24, 11);
+  });
+}
+
+function calcIRPF(g) {
+  if(g<=0)return 0;
+  let t=0;
+  if(g>300000)t+=(g-300000)*0.28;
+  if(g>200000)t+=Math.min(g-200000,100000)*0.26;
+  if(g>50000)t+=Math.min(g-50000,150000)*0.23;
+  if(g>6000)t+=Math.min(g-6000,44000)*0.21;
+  t+=Math.min(g,6000)*0.19;
+  return t;
+}
+
+// ── WATERFALL DATA BUILDERS ──────────────────────────────────────────────────
+
+function buildWaterfallCompra(precio, entrada, gastosCompra, pventa, deudaRestante, irpfV, pvMun, comV, interesesPagados, gastosAnualesTotal) {
+  // Start from 0, build up to patrimonio neto
+  return [
+    { label: 'Precio\nventa', val: pventa, type: 'pos' },
+    { label: 'Entrada\n+ gastos', val: -(entrada+gastosCompra), type: 'neg' },
+    { label: 'Intereses\nhipoteca', val: -interesesPagados, type: 'neg' },
+    { label: 'Gastos\nanuales', val: -gastosAnualesTotal, type: 'neg' },
+    { label: 'Deuda\npendiente', val: -deudaRestante, type: 'neg' },
+    { label: 'IRPF\nventa', val: -irpfV, type: 'neg' },
+    { label: 'Plusvalía\nmunicipal', val: -pvMun, type: 'neg' },
+    { label: 'Comisión\nagencia', val: -comV, type: 'neg' },
+    { label: 'PATRIMONIO\nNETO', val: null, type: 'total' },
+  ];
+}
+
+function buildWaterfallAlquiler(invInicial, totalAportado, carteraBruta, irpfBolsa, gananciasBolsa, totalAlq) {
+  return [
+    { label: 'Capital\naportado', val: totalAportado, type: 'pos' },
+    { label: 'Rentab.\nbolsa', val: gananciasBolsa, type: 'pos' },
+    { label: 'Alquiler\ntotal', val: -totalAlq, type: 'neg' },
+    { label: 'IRPF\nplus. bolsa', val: -irpfBolsa, type: 'neg' },
+    { label: 'PATRIMONIO\nNETO', val: null, type: 'total' },
+  ];
+}
+
+function buildWaterfallResumen(precio, entrada, gastosCompra, pventa, deudaRestante, irpfV, pvMun, comV, interesesPagados, gastosAnualesTotal,
+  invInicial, carteraBruta, irpfBolsa, totalAlq, patriC, patriA) {
+  return [
+    { label: 'Compra\npatrimonio', val: patriC, type: 'bar-gold' },
+    { label: 'Alquiler+\nBolsa neta', val: patriA, type: 'bar-green' },
+  ];
+}
+
+// ── WATERFALL SVG RENDERER ────────────────────────────────────────────────────
+
+function drawWaterfall(svgId, bars) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+
+  const W = Math.max(svg.parentElement.clientWidth || 0, 300) || 700;
+  const H = parseInt(svg.getAttribute('height')) || 220;
+  svg.setAttribute('width', W);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+
+  const pad = { t: 16, r: 16, b: 52, l: 72 };
+  const cw = W - pad.l - pad.r;
+  const ch = H - pad.t - pad.b;
+
+  // Compute running totals
+  let running = 0;
+  const computed = bars.map(b => {
+    if (b.type === 'total') {
+      return { ...b, start: Math.min(running, 0), end: running, computed: running };
+    }
+    if (b.type === 'bar-gold' || b.type === 'bar-green') {
+      return { ...b, start: 0, end: b.val, computed: b.val };
+    }
+    const s = running;
+    running += b.val;
+    return { ...b, start: s, end: running, computed: running };
+  });
+
+  const allVals = computed.flatMap(b => [b.start, b.end]);
+  const minV = Math.min(0, ...allVals);
+  const maxV = Math.max(0, ...allVals);
+  const range = maxV - minV || 1;
+
+  const toY = v => pad.t + ch - ((v - minV) / range) * ch;
+  const zeroY = toY(0);
+
+  const n = computed.length;
+  const barW = Math.min(60, (cw / n) * 0.62);
+  const barX = i => pad.l + (i + 0.5) * (cw / n) - barW / 2;
+
+  const mk = (tag, attrs, text) => {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, v));
+    if (text !== undefined) el.textContent = text;
+    svg.appendChild(el);
+    return el;
+  };
+
+  // Grid lines
+  const gridVals = [minV, minV+(maxV-minV)*0.25, minV+(maxV-minV)*0.5, minV+(maxV-minV)*0.75, maxV];
+  gridVals.forEach(v => {
+    const y = toY(v);
+    mk('line', { x1: pad.l, y1: y, x2: W-pad.r, y2: y, stroke: '#272b36', 'stroke-width': 1 });
+    const label = Math.abs(v) >= 1000 ? (v/1000).toFixed(0)+'k' : v.toFixed(0);
+    mk('text', { x: pad.l-6, y: y+3, fill: '#454a5e', 'font-size': 9, 'font-family': 'IBM Plex Mono', 'text-anchor': 'end' }, label+'€');
+  });
+
+  // Zero line
+  mk('line', { x1: pad.l, y1: zeroY, x2: W-pad.r, y2: zeroY, stroke: '#454a5e', 'stroke-width': 1, 'stroke-dasharray': '3 3' });
+
+  // Connector lines
+  for (let i = 0; i < computed.length - 1; i++) {
+    const cur = computed[i], nxt = computed[i+1];
+    if (cur.type === 'bar-gold' || cur.type === 'bar-green') continue;
+    const connY = toY(cur.end);
+    mk('line', { x1: barX(i)+barW, y1: connY, x2: barX(i+1), y2: connY, stroke: '#454a5e', 'stroke-width': 1, 'stroke-dasharray': '2 2' });
+  }
+
+  // Bars
+  computed.forEach((b, i) => {
+    const x = barX(i);
+    const top = toY(Math.max(b.start, b.end));
+    const bot = toY(Math.min(b.start, b.end));
+    const bh = Math.max(2, bot - top);
+
+    let fill, stroke;
+    if (b.type === 'total') { fill = '#c9a84c'; stroke = '#c9a84c'; }
+    else if (b.type === 'bar-gold') { fill = 'rgba(201,168,76,0.85)'; stroke = '#c9a84c'; }
+    else if (b.type === 'bar-green') { fill = 'rgba(76,201,142,0.85)'; stroke = '#4cc98e'; }
+    else if (b.type === 'pos') { fill = 'rgba(76,201,142,0.75)'; stroke = '#4cc98e'; }
+    else { fill = 'rgba(224,85,85,0.75)'; stroke = '#e05555'; }
+
+    // Bar
+    mk('rect', { x, y: top, width: barW, height: bh, fill, stroke, 'stroke-width': 1, rx: 2 });
+
+    // Value label above/below bar
+    const val = b.type === 'total' ? b.computed : (b.val !== null ? b.val : b.computed);
+    const absVal = Math.abs(val) >= 1000 ? (val/1000).toFixed(0)+'k' : val.toFixed(0);
+    const sign = val > 0 ? '+' : '';
+    const labelY = b.type === 'neg' ? bot + 11 : top - 4;
+    mk('text', {
+      x: x + barW/2, y: labelY,
+      fill: b.type === 'total' ? '#c9a84c' : b.type === 'bar-gold' ? '#c9a84c' : b.type === 'bar-green' ? '#4cc98e' : b.type === 'pos' ? '#4cc98e' : '#e05555',
+      'font-size': 9, 'font-family': 'IBM Plex Mono', 'text-anchor': 'middle', 'font-weight': '500'
+    }, (b.type==='neg'?'':sign) + absVal + '€');
+
+    // X-axis label (multiline)
+    const lines = b.label.split('\n');
+    lines.forEach((line, li) => {
+      mk('text', {
+        x: x + barW/2, y: H - pad.b + 14 + li*12,
+        fill: b.type === 'total' ? '#c9a84c' : '#7a8099',
+        'font-size': 8.5, 'font-family': 'IBM Plex Mono', 'text-anchor': 'middle'
+      }, line);
+    });
+  });
+}
+
+// ── 50-YEAR EVOLUTION CHART ───────────────────────────────────────────────────
+
+function drawChart50(id, rows, horizonte, precio, invInicial, totalAportado) {
+  const canvas = gid(id); if (!canvas) return;
+  const W = Math.max(canvas.parentElement.clientWidth || 700, 300) - 28;
+  const H = Math.max(parseInt(canvas.parentElement.style.height) || 320, 200) - 28;
+  canvas.width=W; canvas.height=H;
+  const ctx = canvas.getContext('2d');
+
+  const dr = rows.filter(r=>r.y<=50);
+
+  const dataCasa = dr.map(r=>{
+    const gp=r.valorCasa-precio;
+    const irpfY=calcIRPF(Math.max(0,gp));
+    const pvY=precio*0.6*Math.min(0.03*r.y,0.45)*0.29;
+    const comY=r.valorCasa*0.03;
+    return Math.round(r.valorCasa-r.saldo-irpfY-pvY-comY);
+  });
+  const dataBolsa = dr.map(r=>{
+    const ganBY=Math.max(0,r.cartera-totalAportado);
+    return Math.round(r.cartera-calcIRPF(ganBY));
+  });
+
+  const all=[...dataCasa,...dataBolsa];
+  const minV=Math.min(0,...all), maxV=Math.max(...all);
+  const pad={t:26,r:22,b:34,l:80};
+  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+  const n=dr.length;
+  const toX=i=>pad.l+(n<=1?cw/2:i/(n-1)*cw);
+  const toY=v=>pad.t+ch-((v-minV)/(maxV-minV||1))*ch;
+
+  // Grid
+  ctx.strokeStyle='#272b36'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+ch/4*i;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    const val=maxV-(maxV-minV)*i/4;
+    ctx.fillStyle='#454a5e'; ctx.font='10px IBM Plex Mono'; ctx.textAlign='right';
+    ctx.fillText((val>=1000?(val/1000).toFixed(0)+'k':val.toFixed(0)), pad.l-8, y+3);
+  }
+
+  // Zero line
+  if(minV<0){
+    const zy=toY(0); ctx.strokeStyle='#454a5e'; ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(pad.l,zy); ctx.lineTo(W-pad.r,zy); ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // ── HORIZONTE VERTICAL MARKER ─────────────────────────────────────────────
+  const hi = horizonte - 1;
+  if (hi < dr.length) {
+    const hx = toX(hi);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(201,168,76,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(hx, pad.t); ctx.lineTo(hx, pad.t+ch); ctx.stroke();
+    ctx.setLineDash([]);
+    // Label
+    ctx.fillStyle = 'rgba(201,168,76,0.85)';
+    ctx.font = 'bold 9px IBM Plex Mono';
+    ctx.textAlign = 'center';
+    const lx = hx + (hx > W*0.75 ? -4 : 4);
+    ctx.save(); ctx.translate(lx, pad.t+ch/2); ctx.rotate(-Math.PI/2);
+    ctx.fillText('Horizonte: año '+horizonte, 0, 0);
+    ctx.restore();
+    ctx.restore();
+  }
+
+  // Fill areas (with opacity ramp after horizonte)
+  const fillArea=(data,color,full)=>{
+    ctx.beginPath();
+    data.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+    ctx.lineTo(toX(data.length-1),toY(minV<0?0:minV));
+    ctx.lineTo(toX(0),toY(minV<0?0:minV));
+    ctx.closePath(); ctx.fillStyle=color; ctx.fill();
+  };
+  fillArea(dataCasa,'rgba(201,168,76,0.05)');
+  fillArea(dataBolsa,'rgba(76,201,142,0.05)');
+
+  // Draw lines — solid until horizonte, dashed after
+  const drawSegmented=(data,color)=>{
+    // Solid part (0 to horizonte)
+    ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.lineJoin='round'; ctx.setLineDash([]);
+    data.slice(0, horizonte).forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+    ctx.stroke();
+    // Dashed part (horizonte to 50)
+    if (horizonte < data.length) {
+      ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.lineJoin='round';
+      ctx.setLineDash([4,4]);
+      ctx.globalAlpha=0.45;
+      data.slice(horizonte-1).forEach((v,i)=>i===0?ctx.moveTo(toX(i+horizonte-1),toY(v)):ctx.lineTo(toX(i+horizonte-1),toY(v)));
+      ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha=1;
+    }
+  };
+  drawSegmented(dataBolsa,'#4cc98e');
+  drawSegmented(dataCasa,'#c9a84c');
+
+  // Dots at horizonte
+  const si=horizonte-1;
+  if(si<dr.length){
+    [[dataCasa,'#c9a84c'],[dataBolsa,'#4cc98e']].forEach(([d,c])=>{
+      ctx.beginPath(); ctx.arc(toX(si),toY(d[si]),5,0,Math.PI*2);
+      ctx.fillStyle=c; ctx.fill(); ctx.strokeStyle='#0b0c0f'; ctx.lineWidth=2; ctx.stroke();
+    });
+    ctx.fillStyle='#c9a84c'; ctx.font='bold 9px IBM Plex Mono'; ctx.textAlign='center';
+    ctx.fillText(fmt(dataCasa[si]), toX(si), toY(dataCasa[si])-10);
+    ctx.fillStyle='#4cc98e';
+    ctx.fillText(fmt(dataBolsa[si]), toX(si), toY(dataBolsa[si])+(dataBolsa[si]<dataCasa[si]?-10:15));
+  }
+
+  // Dots at year 50
+  if(49<dr.length){
+    [[dataCasa,'rgba(201,168,76,0.6)'],[dataBolsa,'rgba(76,201,142,0.6)']].forEach(([d,c])=>{
+      ctx.beginPath(); ctx.arc(toX(49),toY(d[49]),4,0,Math.PI*2);
+      ctx.fillStyle=c; ctx.fill();
+    });
+  }
+
+  // X labels
+  ctx.fillStyle='#454a5e'; ctx.font='9px IBM Plex Mono'; ctx.textAlign='center'; ctx.globalAlpha=1;
+  dr.forEach((r,i)=>{
+    if(r.y===1||r.y%10===0||r.y===horizonte||r.y===50){
+      ctx.fillStyle=r.y===horizonte?'#c9a84c':'#454a5e';
+      ctx.fillText('Año '+r.y, toX(i), H-8);
+    }
+  });
+
+  // Legend
+  [['Compra (pat. neto)','#c9a84c'],['Alquiler + Bolsa','#4cc98e']].forEach(([label,color],li)=>{
+    const lx=pad.l+li*170;
+    ctx.fillStyle=color; ctx.fillRect(lx,7,18,3);
+    ctx.fillStyle='#7a8099'; ctx.font='9px IBM Plex Mono'; ctx.textAlign='left';
+    ctx.fillText(label, lx+24, 11);
+  });
+  // Horizonte legend
+  ctx.strokeStyle='rgba(201,168,76,0.5)'; ctx.setLineDash([4,3]); ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(pad.l+350,9); ctx.lineTo(pad.l+368,9); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#7a8099'; ctx.font='9px IBM Plex Mono'; ctx.textAlign='left';
+  ctx.fillText('Horizonte año '+horizonte, pad.l+374, 12);
+}
+
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, shrink-to-fit=no">
 <title>Compra vs Alquiler — Madrid</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -58,6 +58,8 @@ header h1 em { color: var(--gold); font-style: normal; }
 .inp-wrap:focus-within { border-color: var(--gold); }
 .inp-wrap input { flex: 1; background: transparent; border: none; color: var(--text); font-family: var(--font-m); font-size: 13px; padding: 8px 10px; outline: none; min-width: 0; }
 .inp-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.inp-wrap select { -webkit-appearance: none; appearance: none; }
+.inp-wrap select option { background: var(--surface2); color: var(--text); }
 .inp-unit { padding: 0 10px; color: var(--text-dim); font-family: var(--font-m); font-size: 10px; border-left: 1px solid var(--border); height: 34px; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0; }
 
 .toggle { display: flex; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; background: var(--surface2); }
@@ -99,8 +101,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 13px;
 .diff-meta strong { color: var(--text); }
 
 .tab-nav { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; overflow-x: auto; }
-.tab-nav button { padding: 10px 14px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); font-family: var(--font-m); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all .15s; white-space: nowrap; margin-bottom: -1px; }
-.tab-nav button.on { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-nav button + button { border-left: 1px solid var(--border2); }
+.tab-nav button { padding: 11px 16px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); font-family: var(--font-m); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: background .15s, color .15s, opacity .15s; white-space: nowrap; margin-bottom: -1px; opacity: 0.6; }
+.tab-nav button.on { color: var(--gold); border-bottom-color: var(--gold); background: rgba(201,168,76,0.07); opacity: 1; font-weight: 500; }
+.tab-nav button:hover:not(.on) { color: var(--text); background: var(--surface2); opacity: 1; }
 
 .tab-body { display: none; padding: 22px 24px; }
 .tab-body.on { display: block; }
@@ -188,7 +192,7 @@ canvas { display: block; }
   transition: color .15s; line-height: 1;
 }
 .mobile-bottom-nav button .nav-icon { font-size: 16px; line-height: 1; }
-.mobile-bottom-nav button.active { color: var(--gold); }
+.mobile-bottom-nav button.active { color: var(--gold); opacity: 1; }
 .mobile-bottom-nav button.active .nav-icon { color: var(--gold); }
 
 /* Mobile sidebar overlay */
@@ -309,7 +313,7 @@ canvas { display: block; }
   <div><h1>Compra <em>vs</em> Alquiler</h1></div>
   <div class="header-meta">
     <p>Calculadora fiscal · Madrid · 2025</p>
-    <p style="margin-top:2px;">Impuestos vigentes Comunidad de Madrid</p>
+    <p style="margin-top:2px;" id="header-fiscal-note">Impuestos vigentes Comunidad de Madrid</p>
   </div>
 </header>
 
@@ -334,6 +338,21 @@ canvas { display: block; }
   </div>
     <div class="s-block">
       <div class="s-block-title">Inmueble</div>
+      <div class="field">
+        <label>Comunidad Autónoma</label>
+        <div class="inp-wrap" style="padding:0">
+          <select id="sel-comunidad" onchange="onComunidadChange()" style="flex:1;background:transparent;border:none;color:var(--text);font-family:var(--font-m);font-size:12px;padding:8px 10px;outline:none;cursor:pointer;width:100%">
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Municipio <small>(tipo plusvalía municipal)</small></label>
+        <div class="inp-wrap" style="padding:0">
+          <select id="sel-municipio" onchange="updateFiscalInfo()" style="flex:1;background:transparent;border:none;color:var(--text);font-family:var(--font-m);font-size:12px;padding:8px 10px;outline:none;cursor:pointer;width:100%">
+          </select>
+        </div>
+        <div id="fiscal-info" style="font-family:var(--font-m);font-size:9px;color:var(--text-dim);margin-top:4px;padding:5px 8px;background:var(--surface2);border-radius:3px;border:1px solid var(--border)"></div>
+      </div>
       <div class="field">
         <label>Precio de compra</label>
         <div class="inp-wrap"><input type="number" id="precio" value="350000" oninput="actualizarGastosSugeridos()"><span class="inp-unit">€</span></div>
@@ -432,7 +451,7 @@ canvas { display: block; }
       <div class="field">
         <div class="sl-wrap">
           <div class="sl-hd"><span>Años hasta venta</span><strong id="anv">15 años</strong></div>
-          <input type="range" id="anos" min="1" max="40" step="1" value="15" oninput="gid('anv').textContent=this.value+' años'">
+          <input type="range" id="anos" min="1" max="50" step="1" value="15" oninput="gid('anv').textContent=this.value+' años'">
         </div>
       </div>
     </div>
@@ -481,8 +500,9 @@ function setTipo(t) {
 function actualizarGastosSugeridos() {
   const precio = parseInput('precio') || 350000;
   const esNueva = tipo === 'nueva';
-  // IBI: ~0.4% sobre valor catastral estimado (60% del precio de mercado)
-  const ibiSug    = Math.round(precio * 0.004);
+  // IBI: tipo real de la comunidad seleccionada (sobre precio de referencia)
+  const fiscal  = getFiscal();
+  const ibiSug    = Math.round(precio * (fiscal.ibi_tipo ?? 0.004));
   // Comunidad: nueva sin extras 80-100€/mes, segunda con portero/piscina 140-200€/mes
   const comunSug  = Math.round((esNueva ? 90 : 160) * 12);
   // Seguro: ~0.10% del valor para nueva (más barata), ~0.12% segunda
@@ -547,6 +567,24 @@ function setRangeHorizonte() {
 }
 
 // ── INITIALIZE FORMATTED INPUTS on load ─────────────────────────────────────
+function initSelectores() {
+  const selCA = gid('sel-comunidad');
+  const selMun = gid('sel-municipio');
+  if (!selCA || !selMun) return;
+  // Populate CCAA
+  getComunidades().forEach(ca => {
+    const opt = document.createElement('option');
+    opt.value = ca; opt.textContent = ca;
+    if (ca === 'Comunidad de Madrid') opt.selected = true;
+    selCA.appendChild(opt);
+  });
+  // Populate municipios for default CCAA
+  onComunidadChange();
+  // Set default municipio
+  Array.from(selMun.options).forEach(o => { if (o.value === 'Madrid') o.selected = true; });
+  updateFiscalInfo();
+}
+
 function initInputs() {
   initFormatInput('precio',        350000);
   initFormatInput('alquiler',      1400);
@@ -556,10 +594,11 @@ function initInputs() {
   initFormatInput('inp-mant',      1750);
 }
 // Run after DOM is ready
+function initAll() { initSelectores(); initInputs(); }
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initInputs);
+  document.addEventListener('DOMContentLoaded', initAll);
 } else {
-  setTimeout(initInputs, 0);
+  setTimeout(initAll, 0);
 }
 
 function calcIRPF(g) {
@@ -594,6 +633,69 @@ function showTab(id, btn) {
 }
 
 let lastRows=[], lastPrecio=0, lastCapital=0, lastPlazoA=0, lastInvInicial=0, lastAnos=0;
+
+
+// ── DATOS FISCALES POR COMUNIDAD AUTÓNOMA ───────────────────────────────────
+// ITP: Impuesto Transmisiones Patrimoniales (2ª mano)
+// AJD: Actos Jurídicos Documentados (vivienda nueva)
+// iva_nueva: IVA aplicable (10% general; 7% Canarias IGIC)
+// municipios: tipo impositivo plusvalía municipal por ayuntamiento
+const FISCAL_DATA = {"Andalucía": {"itp": 0.07, "ajd": 0.012, "iva_nueva": 0.1, "ibi_tipo": 0.0048, "nota_itp": "Tipo general 7%. Reducido 3,5% para vivienda habitual ≤130.000€. Ley del Impuesto sobre Transmisiones Patrimoniales de Andalucía.", "nota_ajd": "Tipo general 1,2%. Reducido 0,3% para VPO; 1% vivienda habitual ≤130.000€ o menores de 35 años.", "nota_ibi": "Tipo medio Andalucía: ~0,48% sobre valor catastral. Varía por municipio (Sevilla ~0,84%, Málaga ~0,57%).", "nota_plusv": "IIVTNU. Tipo impositivo varía por municipio. Sevilla/Málaga aplican los máximos permitidos.", "bonif_itp": "Reducción 3,5%: vivienda habitual ≤130.000€; discapacidad ≥65%; familias numerosas.", "municipios": {"Sevilla": 0.3, "Málaga": 0.3, "Córdoba": 0.3, "Granada": 0.29, "Almería": 0.26, "Cádiz": 0.3, "Huelva": 0.26, "Jaén": 0.26}}, "Aragón": {"itp": 0.08, "ajd": 0.01, "iva_nueva": 0.1, "ibi_tipo": 0.004, "nota_itp": "Tipo general 8%. Reducido al 3% para menores de 35 años en vivienda habitual. DLeg 1/2005.", "nota_ajd": "Tipo general 1%. Reducido 0,5% para vivienda habitual. Exento para personas con discapacidad ≥65%.", "nota_ibi": "Tipo medio Aragón: ~0,40% sobre valor catastral. Zaragoza aplica tipo diferenciado por zonas.", "nota_plusv": "IIVTNU. Tipo Zaragoza: 28%. Método objetivo o real (el más favorable al contribuyente, STS 2021).", "bonif_itp": "Tipo reducido 3%: menores 35 años, vivienda habitual. Tipo 0,5% discapacidad ≥65%.", "municipios": {"Zaragoza": 0.28, "Huesca": 0.22, "Teruel": 0.22}}, "Asturias": {"itp": 0.08, "ajd": 0.012, "iva_nueva": 0.1, "ibi_tipo": 0.0042, "nota_itp": "Tipo general 8%. Reducido 5% para jóvenes ≤35a en primer acceso a vivienda habitual. DLeg 2/2014.", "nota_ajd": "Tipo general 1,2%. Reducido 0,3% para VPO de régimen especial.", "nota_ibi": "Tipo medio Asturias: ~0,42% sobre valor catastral. Oviedo y Gijón tienen tipos diferenciados.", "nota_plusv": "IIVTNU. Tipo Oviedo: 25%. Gijón: 27%. Aplicable solo si hay incremento real de valor.", "bonif_itp": "Tipo reducido 5%: menores 35 años, primer acceso vivienda habitual.", "municipios": {"Oviedo": 0.25, "Gijón": 0.27, "Avilés": 0.22}}, "Baleares": {"itp": 0.08, "ajd": 0.012, "iva_nueva": 0.1, "ibi_tipo": 0.0052, "nota_itp": "Tipo escalonado: 8% hasta 400.000€; 9% de 400k a 600k; 10% de 600k a 1M; 11% más de 1M. DLeg 1/2014.", "nota_ajd": "Tipo general 1,2%. Reducido 0,5% para vivienda habitual ≤300.000€.", "nota_ibi": "Tipo medio Baleares: ~0,52%. Palma aplica recargo especial. Uno de los IBI más altos de España.", "nota_plusv": "IIVTNU. Tipo Palma: 29%. Mercado inmobiliario muy activo; plusvalías elevadas en zonas turísticas.", "bonif_itp": "No hay reducción general. Solo VPO: tipo reducido 4%.", "municipios": {"Palma": 0.29, "Ibiza": 0.28, "Manacor": 0.25}}, "Canarias": {"itp": 0.065, "ajd": 0.01, "iva_nueva": 0.07, "ibi_tipo": 0.0038, "nota_itp": "Tipo general 6,5%. ITP aplica en 2ª mano. En vivienda nueva se aplica IGIC (7%) en lugar de IVA. DLeg 1/2009.", "nota_ajd": "Tipo general 1%. En Canarias coexiste con el IGIC. Vivienda nueva sujeta a IGIC + AJD.", "nota_ibi": "Tipo medio Canarias: ~0,38%. Generalmente más bajo que Península. Sin recargo de basuras en muchos municipios.", "nota_plusv": "IIVTNU. Las Palmas y Santa Cruz: tipo 25%. Mercado más moderado que Península.", "bonif_itp": "Tipo reducido 4%: menores 35 años, familias numerosas, discapacidad. IGIC 0% para VPO.", "municipios": {"Las Palmas de Gran Canaria": 0.25, "Santa Cruz de Tenerife": 0.25, "La Laguna": 0.24, "Arrecife": 0.22}}, "Cantabria": {"itp": 0.1, "ajd": 0.015, "iva_nueva": 0.1, "ibi_tipo": 0.0044, "nota_itp": "Tipo general 10% (uno de los más altos). Reducido 5% para vivienda habitual ≤120.000€. DLeg 62/2008.", "nota_ajd": "Tipo general 1,5%. Sin reducciones significativas salvo VPO.", "nota_ibi": "Tipo medio Cantabria: ~0,44%. Santander aplica tipos diferenciados por zonas urbanas.", "nota_plusv": "IIVTNU. Santander: 24%. Mercado relativamente contenido salvo costa.", "bonif_itp": "Tipo reducido 5%: vivienda habitual ≤120.000€; familias numerosas; discapacidad ≥65%.", "municipios": {"Santander": 0.24, "Torrelavega": 0.22}}, "Castilla-La Mancha": {"itp": 0.09, "ajd": 0.01, "iva_nueva": 0.1, "ibi_tipo": 0.0038, "nota_itp": "Tipo general 9%. Reducido 6% para personas con discapacidad ≥65% y familias numerosas. DLeg 1/2010.", "nota_ajd": "Tipo general 1%. Reducido 0,75% para vivienda habitual.", "nota_ibi": "Tipo medio Castilla-La Mancha: ~0,38%. Municipios pequeños tienen tipos más bajos.", "nota_plusv": "IIVTNU. Toledo: 26%. Mercado con menor presión que grandes ciudades.", "bonif_itp": "Tipo reducido 6%: discapacidad ≥65% y familias numerosas en vivienda habitual.", "municipios": {"Toledo": 0.26, "Albacete": 0.26, "Ciudad Real": 0.24, "Cuenca": 0.22, "Guadalajara": 0.25}}, "Castilla y León": {"itp": 0.08, "ajd": 0.015, "iva_nueva": 0.1, "ibi_tipo": 0.004, "nota_itp": "Tipo general 8%. Muy reducido 4% para menores de 36 años en vivienda habitual ≤135.000€. DLeg 1/2013.", "nota_ajd": "Tipo general 1,5%. Muy reducido 0,3% vivienda habitual y jóvenes.", "nota_ibi": "Tipo medio Castilla y León: ~0,40%. Ciudades pequeñas con tipos más bajos. Valladolid ~0,52%.", "nota_plusv": "IIVTNU. Valladolid: 26%. Mercado estable con incrementos moderados.", "bonif_itp": "Tipo reducido 4%: menores 36 años, vivienda habitual ≤135.000€. Familias numerosas: tipo 4%.", "municipios": {"Valladolid": 0.26, "Burgos": 0.25, "Salamanca": 0.25, "León": 0.24, "Segovia": 0.24, "Ávila": 0.22, "Palencia": 0.22, "Zamora": 0.22, "Soria": 0.2}}, "Cataluña": {"itp": 0.1, "ajd": 0.015, "iva_nueva": 0.1, "ibi_tipo": 0.0058, "nota_itp": "Tipo general 10%. Reducido 5% para vivienda habitual ≤300.000€ y menores de 33 años. DLeg 1/2010.", "nota_ajd": "Tipo general 1,5%. Muy reducido 0,1% para vivienda habitual ≤300.000€.", "nota_ibi": "Tipo medio Cataluña: ~0,58%. Barcelona aplica recargo metropolitano. Uno de los IBI más elevados.", "nota_plusv": "IIVTNU. Barcelona: 30%. Mercado muy activo; plusvalías significativas en área metropolitana.", "bonif_itp": "Tipo reducido 5%: vivienda habitual ≤300.000€, menores 33 años o familia numerosa. VPO: tipo 0%.", "municipios": {"Barcelona": 0.3, "Hospitalet de Llobregat": 0.3, "Badalona": 0.29, "Terrassa": 0.29, "Sabadell": 0.29, "Lleida": 0.27, "Tarragona": 0.28, "Girona": 0.27, "Mataró": 0.28}}, "Comunidad de Madrid": {"itp": 0.06, "ajd": 0.0075, "iva_nueva": 0.1, "ibi_tipo": 0.004, "nota_itp": "Tipo bonificado 6% (reducido en 2021 desde el 10% general). DLeg 1/2010 Comunidad de Madrid.", "nota_ajd": "Tipo bonificado 0,75% (reducido desde 1,5%). Tipo 0% para jóvenes ≤35a, familias numerosas y discapacitados.", "nota_ibi": "Tipo medio Madrid capital: ~0,40% sobre valor catastral. El valor catastral suele ser 60-70% del precio de mercado.", "nota_plusv": "IIVTNU. Tipo Madrid: 29%. Método objetivo o real (el más favorable). STS 26/10/2021: sin incremento real, no tributa.", "bonif_itp": "Tipo 0% AJD para jóvenes ≤35a (renta ≤24.107€), familias numerosas y discapacidad ≥65%.", "municipios": {"Madrid": 0.29, "Móstoles": 0.27, "Alcalá de Henares": 0.27, "Fuenlabrada": 0.27, "Leganés": 0.27, "Getafe": 0.27, "Alcorcón": 0.27, "Torrejón de Ardoz": 0.26, "Parla": 0.26, "Alcobendas": 0.26}}, "Comunidad Valenciana": {"itp": 0.1, "ajd": 0.015, "iva_nueva": 0.1, "ibi_tipo": 0.005, "nota_itp": "Tipo general 10%. Reducido 8% para vivienda habitual ≤400.000€ y menores de 35 años. DLeg 1/2005.", "nota_ajd": "Tipo general 1,5%. Muy reducido 0,1% para vivienda habitual y jóvenes.", "nota_ibi": "Tipo medio C. Valenciana: ~0,50%. Valencia y Alicante con tipos diferenciados. Recargo provincial en algunos casos.", "nota_plusv": "IIVTNU. Valencia: 30%. Alicante: 29%. Mercado muy activo especialmente en costa.", "bonif_itp": "Tipo reducido 8%: vivienda habitual ≤400.000€, menores 35 años o familia numerosa. VPO: tipo 4%.", "municipios": {"Valencia": 0.3, "Alicante": 0.29, "Elche": 0.28, "Castellón de la Plana": 0.28, "Torrent": 0.27, "Gandía": 0.27}}, "Extremadura": {"itp": 0.08, "ajd": 0.015, "iva_nueva": 0.1, "ibi_tipo": 0.0036, "nota_itp": "Tipo general 8%. Reducido 7% vivienda habitual general; 4% para VPO y menores 35 años. DLeg 1/2013.", "nota_ajd": "Tipo general 1,5%. Reducido 1,2% para vivienda habitual.", "nota_ibi": "Tipo medio Extremadura: ~0,36%. Uno de los más bajos de España por valores catastrales moderados.", "nota_plusv": "IIVTNU. Badajoz: 25%, Cáceres: 24%. Incrementos de valor moderados en comparación con otras CCAA.", "bonif_itp": "Tipo reducido 7%: vivienda habitual. Tipo 4%: VPO y menores 35 años.", "municipios": {"Badajoz": 0.25, "Cáceres": 0.24, "Mérida": 0.23}}, "Galicia": {"itp": 0.1, "ajd": 0.015, "iva_nueva": 0.1, "ibi_tipo": 0.0044, "nota_itp": "Tipo general 10%. Reducido 8% para menores de 36 años. Reducido 3% para VPO. DLeg 1/2011.", "nota_ajd": "Tipo general 1,5%. Reducido 1% para vivienda habitual. Exento para VPO de régimen especial.", "nota_ibi": "Tipo medio Galicia: ~0,44%. Vigo y A Coruña con tipos elevados. Reciente revisión catastral en principales ciudades.", "nota_plusv": "IIVTNU. Vigo y A Coruña: 29%. Mercado con revalorización sostenida en ciudades principales.", "bonif_itp": "Tipo reducido 8%: menores 36 años. Tipo 3%: VPO régimen especial.", "municipios": {"Vigo": 0.29, "A Coruña": 0.29, "Ourense": 0.26, "Santiago de Compostela": 0.27, "Lugo": 0.25, "Pontevedra": 0.26}}, "La Rioja": {"itp": 0.07, "ajd": 0.01, "iva_nueva": 0.1, "ibi_tipo": 0.0038, "nota_itp": "Tipo general 7%. Reducido 5% para menores de 36 años en vivienda habitual ≤150.000€. Ley 6/2002.", "nota_ajd": "Tipo general 1%. Reducido 0,5% para vivienda habitual ≤150.000€.", "nota_ibi": "Tipo medio La Rioja: ~0,38%. Logroño aplica tipo moderado con buena gestión catastral.", "nota_plusv": "IIVTNU. Logroño: 25%. Mercado tranquilo; incrementos de valor moderados.", "bonif_itp": "Tipo reducido 5%: menores 36 años, vivienda habitual ≤150.000€.", "municipios": {"Logroño": 0.25, "Calahorra": 0.22}}, "Murcia": {"itp": 0.08, "ajd": 0.015, "iva_nueva": 0.1, "ibi_tipo": 0.0046, "nota_itp": "Tipo general 8%. Muy reducido 3% para jóvenes ≤35 años en vivienda habitual ≤200.000€. DLeg 1/2010.", "nota_ajd": "Tipo general 1,5%. Muy reducido 0,1% para vivienda habitual y jóvenes.", "nota_ibi": "Tipo medio Murcia: ~0,46%. Cartagena y pedanías con tipos distintos. Reciente revisión catastral.", "nota_plusv": "IIVTNU. Murcia: 28%, Cartagena: 27%. Mercado dinámico especialmente en costa cálida.", "bonif_itp": "Tipo reducido 3%: jóvenes ≤35 años, vivienda habitual ≤200.000€. Familias numerosas: tipo 4%.", "municipios": {"Murcia": 0.28, "Cartagena": 0.27, "Lorca": 0.24, "Molina de Segura": 0.24}}, "Navarra": {"itp": 0.06, "ajd": 0.005, "iva_nueva": 0.1, "ibi_tipo": 0.0035, "nota_itp": "Tipo general 6% (régimen foral propio). Ley Foral 14/2004. Gestión propia Hacienda Foral.", "nota_ajd": "Tipo general 0,5% (muy reducido respecto a régimen común). Régimen foral navarro.", "nota_ibi": "Tipo medio Navarra: ~0,35%. Gestión propia Hacienda Foral; tipos más bajos que régimen común.", "nota_plusv": "IIVTNU. Pamplona: 26%. Régimen foral con particularidades propias. Mercado estable.", "bonif_itp": "Régimen foral propio con bonificaciones específicas. Menores 35 años: reducciones adicionales.", "municipios": {"Pamplona": 0.26, "Tudela": 0.23, "Barañáin": 0.22}}, "País Vasco": {"itp": 0.04, "ajd": 0.005, "iva_nueva": 0.1, "ibi_tipo": 0.003, "nota_itp": "Tipo general 4% (régimen foral propio; muy inferior al régimen común). Gestionado por Diputaciones Forales.", "nota_ajd": "Tipo general 0,5%. Régimen foral propio de Álava, Bizkaia y Gipuzkoa.", "nota_ibi": "Tipo medio País Vasco: ~0,30%. Gestión foral; generalmente más bajo que régimen común. Revisiones catastrales frecuentes.", "nota_plusv": "IIVTNU. Bilbao y San Sebastián: 28%. Régimen foral con normas propias. Mercado muy activo en Bilbao.", "bonif_itp": "Régimen foral propio. Cada diputación (Álava, Bizkaia, Gipuzkoa) tiene sus propias bonificaciones.", "municipios": {"Bilbao": 0.28, "Vitoria-Gasteiz": 0.27, "San Sebastián": 0.28, "Barakaldo": 0.26, "Getxo": 0.26}}};
+
+function getComunidades() {
+  return Object.keys(FISCAL_DATA).sort();
+}
+
+function getMunicipios(comunidad) {
+  return Object.keys(FISCAL_DATA[comunidad]?.municipios || {}).sort();
+}
+
+function getFiscal() {
+  const ca  = gid('sel-comunidad')?.value || 'Comunidad de Madrid';
+  const mun = gid('sel-municipio')?.value || 'Madrid';
+  const d   = FISCAL_DATA[ca] || FISCAL_DATA['Comunidad de Madrid'];
+  return {
+    itp:        d.itp,
+    ajd:        d.ajd,
+    iva_nueva:  d.iva_nueva,
+    ibi_tipo:   d.ibi_tipo ?? 0.004,
+    tipoPlusv:  d.municipios[mun] ?? 0.29,
+    comunidad:  ca,
+    municipio:  mun,
+    nota_itp:   d.nota_itp   ?? '',
+    nota_ajd:   d.nota_ajd   ?? '',
+    nota_ibi:   d.nota_ibi   ?? '',
+    nota_plusv: d.nota_plusv ?? '',
+    bonif_itp:  d.bonif_itp  ?? '',
+  };
+}
+
+function onComunidadChange() {
+  const ca  = gid('sel-comunidad').value;
+  const sel = gid('sel-municipio');
+  const munis = getMunicipios(ca);
+  sel.innerHTML = munis.map(m => `<option value="${m}">${m}</option>`).join('');
+  updateFiscalInfo();
+  updateHeaderNote();
+}
+
+function updateHeaderNote() {
+  const f = getFiscal();
+  const el = document.getElementById('header-fiscal-note');
+  if (el) el.textContent = `Impuestos vigentes · ${f.comunidad}`;
+  // Update mobile header too if exists
+  const mel = document.getElementById('mobile-fiscal-note');
+  if (mel) mel.textContent = `${f.comunidad}`;
+}
+
+function updateFiscalInfo() {
+  const f = getFiscal();
+  const el = gid('fiscal-info');
+  if (el) {
+    el.textContent = `ITP ${(f.itp*100).toFixed(2)}% · AJD ${(f.ajd*100).toFixed(3)}% · IBI ~${(f.ibi_tipo*100).toFixed(3)}% · Plusvalía ${(f.tipoPlusv*100).toFixed(0)}%`;
+  }
+  updateHeaderNote();
+}
 
 // ── NUMBER FORMAT UTILITIES ──────────────────────────────────────────────────
 function fmtInput(n) {
@@ -652,8 +754,12 @@ function calcular() {
   const totalHip  = cuotaMes*nPagos;
   const totalIntHip = totalHip-capital;
 
-  // Impuestos compra
-  const itpTipo=0.06, ivaTipo=0.10, ajdTipo=0.0075;
+  // Impuestos compra — según comunidad autónoma y municipio seleccionados
+  const fiscal  = getFiscal();
+  const itpTipo = fiscal.itp;
+  const ivaTipo = fiscal.iva_nueva;
+  const ajdTipo = fiscal.ajd;
+  const tipoPlusv = fiscal.tipoPlusv;
   const itp = tipo==='segunda'?precio*itpTipo:0;
   const iva = tipo==='nueva'?precio*ivaTipo:0;
   const ajd = tipo==='nueva'?precio*ajdTipo:0;
@@ -665,7 +771,7 @@ function calcular() {
   const invInicial = entrada+gastosCompra;
 
   // Gastos anuales propiedad — leídos desde inputs editables
-  const ibiA    = parseInput('inp-ibi')      || precio*0.004;
+  const ibiA    = parseInput('inp-ibi')      || precio*(fiscal.ibi_tipo ?? 0.004);
   const comunA  = parseInput('inp-comunidad') || (precio>400000?220:160)*12;
   const seguroA = parseInput('inp-seguro')    || precio*0.001;
   const mantA   = parseInput('inp-mant')      || precio*0.005;
@@ -702,7 +808,7 @@ function calcular() {
   const ganP   = pventa-precio;
   const irpfV  = calcIRPF(Math.max(0,ganP));
   const pvBase = precio*0.60*Math.min(0.03*anos,0.45);
-  const pvMun  = pvBase*0.29;
+  const pvMun  = pvBase*tipoPlusv;
   const comV   = pventa*0.03;
   const gastVenta = irpfV+pvMun+comV;
   // patriC: lo que obtienes de la venta, descontando TODOS los pagos reales
@@ -829,8 +935,8 @@ function calcular() {
     </div>
     <div class="section">
       <div class="section-hd">Resumen en cascada <span>flujos totales de cada opción · año ${anos}</span></div>
-      <div class="waterfall-wrap"><svg id="wfResumen" class="wf-svg" height="260"></svg></div>
-      <p class="footnote">• Verde = entradas de valor · Rojo = salidas de valor · Dorado = resultado neto final. Las barras muestran el impacto acumulado de cada concepto sobre el patrimonio final.</p>
+      <div class="chart-box" style="padding:14px;height:auto;margin-bottom:0"><div class="waterfall-wrap" style="overflow-x:auto"><svg id="wfResumen" class="wf-svg" height="260"></svg></div></div>
+      <p class="footnote">• Amarillo = inversión inicial y patrimonio neto final · Verde = retornos positivos · Rojo = costes y deducciones. La línea vertical separa las dos opciones.</p>
     </div>
     <div class="section">
       <div class="section-hd">Comparativa visual <span>patrimonio neto · años 1 a ${anos}</span></div>
@@ -849,16 +955,16 @@ function calcular() {
     </div>
 
     <div class="section">
-      <div class="section-hd">Impuestos y gastos en la COMPRA <span>${tipo==='segunda'?'2ª Mano':'Vivienda Nueva'} · Madrid 2025</span></div>
+      <div class="section-hd">Impuestos y gastos en la COMPRA <span>${tipo==='segunda'?'2ª Mano':'Vivienda Nueva'} · ${fiscal.comunidad} · ${new Date().getFullYear()}</span></div>
       <div class="tbl-wrap"><table>
         <thead><tr><th>Concepto</th><th>Base imponible</th><th class="ra">Tipo</th><th class="ra">Importe</th></tr></thead>
         <tbody>
           ${tipo==='segunda'?`
           <tr>
             <td>
-              <span class="cm">ITP — Impuesto Transmisiones Patrimoniales</span><span class="tag">Comunidad de Madrid</span>
-              <span class="note">Tipo general vigente en Madrid: 6% (Decreto Legislativo 1/2010). Se aplica sobre el precio escriturado.</span>
-              <span class="note">Bonificaciones: 4% para menores de 35 años (renta ≤24.107€ · patrimonio ≤175.000€) · familias numerosas · discapacidad ≥65%.</span>
+              <span class="cm">ITP — Impuesto Transmisiones Patrimoniales</span><span class="tag">${fiscal.comunidad}</span>
+              <span class="note">${fiscal.nota_itp}</span>
+              <span class="note">${fiscal.bonif_itp}</span>
               <span class="note">En 2ª mano NO se paga IVA. El comprador siempre paga el ITP.</span>
             </td>
             <td class="cm">${fmt(precio)}</td>
@@ -878,9 +984,10 @@ function calcular() {
           </tr>
           <tr>
             <td>
-              <span class="cm">AJD — Actos Jurídicos Documentados</span><span class="tag">Comunidad de Madrid</span>
-              <span class="note">Grava el documento notarial en operaciones sujetas a IVA. Tipo general Madrid: 0,75% (art. 27 DLeg. 1/2010).</span>
-              <span class="note">Tipo 0% para jóvenes ≤35a, familias numerosas y discapacitados. Desde Ley 5/2019 el banco paga el AJD de la hipoteca.</span>
+              <span class="cm">AJD — Actos Jurídicos Documentados</span><span class="tag">${fiscal.comunidad}</span>
+              <span class="note">${fiscal.nota_ajd}</span>
+              <span class="note">${fiscal.bonif_itp}</span>
+              <span class="note">Solo aplica en vivienda nueva.s y discapacitados. Desde Ley 5/2019 el banco paga el AJD de la hipoteca.</span>
             </td>
             <td class="cm">${fmt(precio)}</td>
             <td class="ra">${pct(ajdTipo*100)}</td>
@@ -937,9 +1044,9 @@ function calcular() {
         <thead><tr><th>Concepto</th><th>Cálculo aplicado</th><th class="ra">Importe/año</th></tr></thead>
         <tbody>
           <tr>
-            <td><span class="cm">IBI — Impuesto sobre Bienes Inmuebles</span><span class="tag">Ayuntamiento de Madrid</span>
-              <span class="note">Tipo medio Madrid capital: ~0,40% sobre valor catastral. El valor catastral suele ser inferior al precio de mercado (60-70%). Se aplica sobre el precio como referencia.</span>
-              <span class="note">Se puede reclamar reducción si el valor catastral está desactualizado o es superior al de mercado.</span>
+            <td><span class="cm">IBI — Impuesto sobre Bienes Inmuebles</span><span class="tag">${fiscal.municipio}</span>
+              <span class="note">${fiscal.nota_ibi}</span>
+              <span class="note">Se puede reclamar reducción si el valor catastral está desactualizado. Valor catastral suele ser 60-70% del precio de mercado.</span>
             </td>
             <td class="cd">Input editable · base: precio × 0,40%</td>
             <td class="ra cr">${fmt(ibiA)}</td>
@@ -993,13 +1100,13 @@ function calcular() {
           </tr>
           <tr>
             <td>
-              <span class="cm">Plusvalía Municipal (IIVTNU)</span><span class="tag">Ayuntamiento de Madrid</span>
-              <span class="note">Impuesto sobre el Incremento de Valor de los Terrenos de Naturaleza Urbana. Lo paga el vendedor (salvo pacto en contrario).</span>
-              <span class="note">Método objetivo: valor catastral suelo (estimado 60% precio) × coeficiente según años de tenencia (máx. 45%) × tipo impositivo Madrid 29%.</span>
-              <span class="note">Base estimada: ${fmt(pvBase)} · STS 26/10/2021: si la transmisión no genera incremento real, no tributa (método real si es más favorable).</span>
+              <span class="cm">Plusvalía Municipal (IIVTNU)</span><span class="tag">${fiscal.municipio}</span>
+              <span class="note">${fiscal.nota_plusv}</span>
+              <span class="note">Método objetivo: valor catastral suelo × coeficiente años (máx. 45%) × tipo ${pct(tipoPlusv*100)}. Base: ${fmt(pvBase)}.sitivo Madrid 29%.</span>
+              <span class="note">Tipo impositivo ${fiscal.municipio}: ${pct(tipoPlusv*100)} · Base estimada: ${fmt(pvBase)} · STS 26/10/2021: si la transmisión no genera incremento real de valor, no tributa (método real si es más favorable al contribuyente).</span>
             </td>
             <td class="cm">${fmt(pvBase)}</td>
-            <td class="ra">29%</td>
+            <td class="ra">${pct(tipoPlusv*100)}</td>
             <td class="ra cr">${fmt(pvMun)}</td>
           </tr>
           <tr>
@@ -1252,7 +1359,7 @@ function calcular() {
               if(r.y<=anos) acumAlq+=r.alqAnual;
               const gp=r.valorCasa-precio;
               const irpfY=calcIRPF(Math.max(0,gp));
-              const pvY=precio*0.6*Math.min(0.03*r.y,0.45)*0.29;
+              const pvY=precio*0.6*Math.min(0.03*r.y,0.45)*tipoPlusv;
               const comY=r.valorCasa*0.03;
               const gvY=irpfY+pvY+comY;
               // netY: incluye todos los pagos reales acumulados
@@ -1295,8 +1402,10 @@ function calcular() {
     entrada, gastosCompra, pventa, deudaRestante: rowN.saldo,
     irpfV, pvMun, comV, totalInt, gastAnuA,
     rowNCartera: rowN.cartera, irpfBolsa, gananciasBolsa, totalAlq,
-    patriC, patriA
+    patriC, patriA, tipoPlusv
   };
+  // Also store tipoPlusv globally for chart functions
+  window._tipoPlusv = tipoPlusv;
   window._renderCharts = function() {
     const p = window._chartParams;
     if (!p) return;
@@ -1326,16 +1435,21 @@ function drawChart(id, rows, anos, precio, invInicial, totalAportado, gastosComp
   const ctx = canvas.getContext('2d');
 
   const dr = rows.filter(r=>r.y<=anos);
+  const _tp = window._tipoPlusv || 0.29;
+  // Build cumulative interest + alquiler maps
+  let _ci=0, _ca=0;
+  const _ciM={}, _caM={};
+  dr.forEach(r=>{ _ci+=r.intA; _ciM[r.y]=_ci; _ca+=r.alqAnual; _caM[r.y]=_ca; });
   const dataCasa = dr.map(r=>{
     const gp=r.valorCasa-precio;
     const irpfY=calcIRPF(Math.max(0,gp));
-    const pvY=precio*0.6*Math.min(0.03*r.y,0.45)*0.29;
+    const pvY=precio*0.6*Math.min(0.03*r.y,0.45)*_tp;
     const comY=r.valorCasa*0.03;
-    return Math.round(r.valorCasa-r.saldo-irpfY-pvY-comY);
+    return Math.round(r.valorCasa-r.saldo-irpfY-pvY-comY-gastosCompra-_ciM[r.y]-gastAnuA*Math.min(r.y,anos));
   });
   const dataBolsa = dr.map(r=>{
     const ganBY=Math.max(0,r.cartera-totalAportado);
-    return Math.round(r.cartera-calcIRPF(ganBY));
+    return Math.round(r.cartera-calcIRPF(ganBY)-_caM[r.y]);
   });
 
   const all=[...dataCasa,...dataBolsa];
@@ -1568,6 +1682,7 @@ function drawWaterfall(svgId, bars) {
   gridVals.forEach(v => {
     const y = toY(v);
     mk('line', { x1: pad.l, y1: y, x2: W-pad.r, y2: y, stroke: '#272b36', 'stroke-width': 1 });
+    if (Math.abs(v) < 1) return; // omitir etiqueta del 0
     const label = Math.abs(v) >= 1000 ? (v/1000).toFixed(0)+'k' : v.toFixed(0);
     mk('text', { x: pad.l-6, y: y+3, fill: '#454a5e', 'font-size': 9, 'font-family': 'IBM Plex Mono', 'text-anchor': 'end' }, label+'€');
   });
@@ -1575,9 +1690,20 @@ function drawWaterfall(svgId, bars) {
   // Zero line
   mk('line', { x1: pad.l, y1: zeroY, x2: W-pad.r, y2: zeroY, stroke: '#454a5e', 'stroke-width': 1, 'stroke-dasharray': '3 3' });
 
-  // Connector lines
+  // Connector lines (skip spacer) + vertical separator at spacer
   for (let i = 0; i < computed.length - 1; i++) {
     const cur = computed[i], nxt = computed[i+1];
+    if (cur.type === 'spacer' || nxt.type === 'spacer') {
+      // Draw vertical separator line at spacer position
+      if (cur.type === 'spacer') {
+        const sx = barX(i) + barW/2;
+        mk('line', { x1: sx, y1: pad.t, x2: sx, y2: pad.t+ch, stroke: '#454a5e', 'stroke-width': 1, 'stroke-dasharray': '4 3' });
+        // Group labels
+        mk('text', { x: barX(i-1)+barW/2-20, y: pad.t+8, fill: '#c9a84c', 'font-size': 8, 'font-family': 'IBM Plex Mono', 'text-anchor': 'middle', 'letter-spacing': 2 }, 'COMPRA');
+        mk('text', { x: barX(i+1)+barW/2+20, y: pad.t+8, fill: '#c9a84c', 'font-size': 8, 'font-family': 'IBM Plex Mono', 'text-anchor': 'middle', 'letter-spacing': 2 }, 'ALQUILER');
+      }
+      continue;
+    }
     if (cur.type === 'bar-gold' || cur.type === 'bar-green') continue;
     const connY = toY(cur.end);
     mk('line', { x1: barX(i)+barW, y1: connY, x2: barX(i+1), y2: connY, stroke: '#454a5e', 'stroke-width': 1, 'stroke-dasharray': '2 2' });
@@ -1614,7 +1740,9 @@ function drawWaterfall(svgId, bars) {
     const labelY = b.type === 'neg' ? bot + 11 : top - 4;
     mk('text', {
       x: x + barW/2, y: labelY,
-      fill: b.type === 'total' ? '#c9a84c' : b.type === 'bar-gold' ? '#c9a84c' : b.type === 'bar-green' ? '#4cc98e' : b.type === 'pos' ? '#4cc98e' : '#e05555',
+      fill: (['total','bar-gold','bar-green','bar-gold-light','bar-green-light'].includes(b.type)) ? '#c9a84c'
+             : (['pos','bar-gold-pos','bar-green-pos'].includes(b.type)) ? '#4cc98e'
+             : '#e05555',
       'font-size': 9, 'font-family': 'IBM Plex Mono', 'text-anchor': 'middle', 'font-weight': '500'
     }, (b.type==='neg'?'':sign) + absVal + '€');
 
@@ -1652,7 +1780,7 @@ function drawChart50(id, rows, horizonte, precio, invInicial, totalAportado, gas
   const dataCasa = dr.map(r=>{
     const gp=r.valorCasa-precio;
     const irpfY=calcIRPF(Math.max(0,gp));
-    const pvY=precio*0.6*Math.min(0.03*r.y,0.45)*0.29;
+    const pvY=precio*0.6*Math.min(0.03*r.y,0.45)*(window._tipoPlusv||0.29);
     const comY=r.valorCasa*0.03;
     return Math.round(r.valorCasa-r.saldo-irpfY-pvY-comY-gastosCompra-_acumIntMap[r.y]-gastAnuA*Math.min(r.y,anos));
   });

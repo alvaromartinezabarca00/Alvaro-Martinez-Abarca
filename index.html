@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, shrink-to-fit=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
 <title>Compra vs Alquiler — Madrid</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -29,8 +29,8 @@
   --font-s: 'IBM Plex Sans', sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
-body { background: var(--bg); color: var(--text); font-family: var(--font-s); font-size: 13px; line-height: 1.55; display: flex; flex-direction: column; }
+html { height: 100%; overflow-x: hidden; }
+body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font-s); font-size: 13px; line-height: 1.55; display: flex; flex-direction: column; overflow-x: hidden; }
 
 header {
   padding: 24px 32px 18px;
@@ -227,7 +227,7 @@ canvas { display: block; }
 @media (max-width: 768px) {
   /* Hide desktop layout */
   header { display: none !important; }
-  .app { grid-template-columns: 1fr !important; height: auto !important; overflow: visible !important; }
+  .app { grid-template-columns: 1fr !important; height: auto !important; overflow: visible !important; max-width: 100vw; }
 
   /* Show mobile elements */
   .mobile-header { display: flex !important; }
@@ -245,20 +245,28 @@ canvas { display: block; }
   .sidebar.open { transform: translateX(0) !important; }
 
   /* Results area */
-  .results { overflow-y: visible !important; padding-bottom: 80px; }
+  .results { overflow-y: visible !important; overflow-x: hidden; padding-bottom: 80px; max-width: 100vw; }
 
   /* Tab nav: horizontal scroll */
   .tab-nav { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
   .tab-nav::-webkit-scrollbar { display: none; }
   .tab-nav button { padding: 10px 12px; white-space: nowrap; font-size: 8px; }
 
-  /* Verdict cards: stack vertically */
+  /* Verdict cards: stack vertically + fuente reducida */
   .verdict { grid-template-columns: 1fr !important; }
-  .vcard { border-right: none !important; border-bottom: 1px solid var(--border); }
-  .vcard.winner::after { font-size: 7px; padding: 2px 5px; }
+  .vcard { border-right: none !important; border-bottom: 1px solid var(--border); padding: 12px 14px !important; gap: 3px; }
+  .vcard.winner::after { font-size: 7px; padding: 2px 5px; top: 8px; right: 8px; }
+  .vc-val { font-size: 22px !important; }
+  .vc-label { font-size: 8px !important; }
+  .vc-sub { font-size: 9px !important; line-height: 1.4; }
+  .vc-chips { gap: 4px; margin-top: 5px; }
+  .chip { font-size: 8px !important; padding: 2px 6px !important; }
 
-  /* Diff bar: stack vertically */
-  .diff-bar { flex-direction: column; gap: 10px; padding: 12px 16px; }
+  /* Diff bar: compacto en mobile */
+  .diff-bar { flex-direction: column; gap: 8px; padding: 10px 14px; }
+  .diff-bar .dl { font-size: 8px !important; }
+  .diff-bar .dv { font-size: 18px !important; }
+  .diff-meta { font-size: 9px !important; line-height: 1.6; }
 
   /* KPI grids: 2 cols on mobile */
   .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 6px !important; }
@@ -283,7 +291,7 @@ canvas { display: block; }
   .range-controls input[type=range] { width: 90px; }
 
   /* Tab content padding */
-  .tab-body { padding: 16px !important; }
+  .tab-body { padding: 16px !important; overflow-x: hidden; max-width: 100vw; }
 
   /* Section headings smaller */
   .section-hd { font-size: 8px !important; }

@@ -183,6 +183,9 @@ canvas { display: block; }
   background: var(--surface); border-top: 1px solid var(--border);
   padding: 0; height: 68px;
   grid-template-columns: repeat(5, 1fr);
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 .mobile-bottom-nav button {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -217,7 +220,7 @@ canvas { display: block; }
   line-height: 1; flex-shrink: 0;
 }
 .mobile-calc-fab {
-  position: fixed; bottom: 80px; right: 16px; z-index: 90;
+  position: fixed; bottom: 80px; left: 16px; z-index: 90;
   background: var(--gold); color: #0b0c0f; border: none; border-radius: 28px;
   padding: 12px 20px; font-family: var(--font-d); font-size: 14px; font-weight: 700;
   box-shadow: 0 4px 20px rgba(201,168,76,0.4); cursor: pointer; white-space: nowrap;
@@ -316,7 +319,7 @@ canvas { display: block; }
   .alert-box { font-size: 9px !important; }
 
   /* Calc btn inside sidebar: sticky bottom */
-  .calc-btn { display: none; }
+  /* calc-btn visible inside sidebar on mobile (sidebar is a drawer) */
 
   /* Footnote smaller */
   .footnote { font-size: 8px !important; }
@@ -340,16 +343,15 @@ canvas { display: block; }
 
 <!-- Mobile Header -->
 <div class="mobile-header">
-  <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Configuración">⚙</button>
   <h1>Compra <em>vs</em> Alquiler</h1>
-  <div style="font-family:var(--font-m);font-size:9px;color:var(--text-dim);text-align:right;line-height:1.4">Madrid<br>2025</div>
+  <div id="mobile-fiscal-note" style="font-family:var(--font-m);font-size:9px;color:var(--text-dim);text-align:right;line-height:1.4">Madrid</div>
 </div>
 
 <!-- Sidebar overlay (mobile) -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
 <!-- Mobile FAB: Calcular -->
-<button class="mobile-calc-fab" onclick="calcularMobile()">Calcular →</button>
+<button class="mobile-calc-fab" onclick="toggleSidebar()">⚙ Parámetros</button>
 
 <div class="app">
   <aside class="sidebar" id="mainSidebar">
@@ -477,7 +479,7 @@ canvas { display: block; }
       </div>
     </div>
 
-    <button class="calc-btn" onclick="calcular()">Calcular →</button>
+    <button class="calc-btn" onclick="calcularMobile ? calcularMobile() : calcular()">Calcular →</button>
   </aside>
 
   <div class="results" id="results">
